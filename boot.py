@@ -1,11 +1,15 @@
-# boot.py - CircuitPython USB Configuration
+# boot.py - CircuitPython USB Keyboard Configuration
 import board
 import digitalio
 import storage
+import supervisor
 import usb_hid
 
-# Set USB product name
-# storage.remount("/", readonly=False) # Uncomment if you want to allow filesystem writes from Python code
+# Set recognizable USB Manufacturer and Product name in OS / Device Manager
+supervisor.set_usb_identification(
+    manufacturer="Custom Tech",
+    product="15-Key RP2040 Macropad",
+)
 
 # Enable standard USB HID devices (Keyboard, Consumer Control / Media keys, Mouse)
 usb_hid.enable(

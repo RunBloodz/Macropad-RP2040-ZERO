@@ -1,7 +1,10 @@
 """
-15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad Firmware
-Powered by CircuitPython & KMK Firmware
-Board: RP2040-Zero
+====================================================================
+ 15-Key + 1 Rotary Encoder Macropad Firmware
+ Board: Waveshare RP2040-Zero
+ Firmware: CircuitPython + KMK
+ Device Name: "15-Key RP2040 Macropad"
+====================================================================
 """
 
 import board
@@ -14,10 +17,11 @@ from kmk.modules.encoder import EncoderHandler
 from kmk.modules.macros import Press, Release, Tap, Delay, Macros
 from kmk.extensions.media_keys import MediaKeys
 
-# Initialize Keyboard instance
+# Initialize Keyboard
 keyboard = KMKKeyboard()
+keyboard.name = "15-Key RP2040 Macropad"
 
-# Add Modules & Extensions
+# Modules & Extensions
 layers = Layers()
 encoder_handler = EncoderHandler()
 macros = Macros()
@@ -26,78 +30,92 @@ media_keys = MediaKeys()
 keyboard.modules = [layers, encoder_handler, macros]
 keyboard.extensions = [media_keys]
 
-# --- HARDWARE CONFIGURATION ---
+# ====================================================================
+# HARDWARE PIN CONFIGURATION
+# ====================================================================
 
 # 4x4 Matrix Pin Definitions
-# Rows 0..3: GP0, GP1, GP2, GP3
-# Cols 0..3: GP4, GP5, GP6, GP7
 keyboard.row_pins = (board.GP0, board.GP1, board.GP2, board.GP3)
 keyboard.col_pins = (board.GP4, board.GP5, board.GP6, board.GP7)
 
 # Diode Direction:
-# COL2ROW = Anode on Column, Cathode (striped side) on Row.
-# If your diodes are wired ROW2COL, change DiodeOrientation.COL2ROW to DiodeOrientation.ROW2COL
+# COL2ROW (Anode on Column, Cathode/Stripe on Row)
 keyboard.diode_orientation = DiodeOrientation.COL2ROW
 
-# Rotary Encoder Configuration
-# Pin A: GP8, Pin B: GP9
-# Push Button: Dedicated pin GP10
+# Rotary Encoder Pins (Encoder A, Encoder B, Push Switch, Is_Flipped)
 encoder_handler.pins = ((board.GP8, board.GP9, board.GP10, False),)
 
-# --- KEYMAP & MACROS CONFIGURATION ---
+# ====================================================================
+# CUSTOMIZABLE MACROS & SHORTCUTS
+# Create your custom key combinations or text macros here!
+# ====================================================================
 
-# Custom Macro Definitions (Easily customizable!)
-# Example: Copy / Paste / Undo / Cut / Select All / Custom Shortcut String
-MACRO_COPY = KC.MACRO(Press(KC.LCTRL), Tap(KC.C), Release(KC.LCTRL))
-MACRO_PASTE = KC.MACRO(Press(KC.LCTRL), Tap(KC.V), Release(KC.LCTRL))
-MACRO_CUT = KC.MACRO(Press(KC.LCTRL), Tap(KC.X), Release(KC.LCTRL))
-MACRO_UNDO = KC.MACRO(Press(KC.LCTRL), Tap(KC.Z), Release(KC.LCTRL))
-MACRO_SELECT_ALL = KC.MACRO(Press(KC.LCTRL), Tap(KC.A), Release(KC.LCTRL))
-MACRO_SAVE = KC.MACRO(Press(KC.LCTRL), Tap(KC.S), Release(KC.LCTRL))
+# Common OS / Productivity Shortcuts
+MACRO_COPY      = KC.MACRO(Press(KC.LCTRL), Tap(KC.C), Release(KC.LCTRL))
+MACRO_PASTE     = KC.MACRO(Press(KC.LCTRL), Tap(KC.V), Release(KC.LCTRL))
+MACRO_CUT       = KC.MACRO(Press(KC.LCTRL), Tap(KC.X), Release(KC.LCTRL))
+MACRO_UNDO      = KC.MACRO(Press(KC.LCTRL), Tap(KC.Z), Release(KC.LCTRL))
+MACRO_REDO      = KC.MACRO(Press(KC.LCTRL), Tap(KC.Y), Release(KC.LCTRL))
+MACRO_SELECT_ALL= KC.MACRO(Press(KC.LCTRL), Tap(KC.A), Release(KC.LCTRL))
+MACRO_SAVE      = KC.MACRO(Press(KC.LCTRL), Tap(KC.S), Release(KC.LCTRL))
+MACRO_TASK_MGR  = KC.MACRO(Press(KC.LCTRL), Press(KC.LSHIFT), Tap(KC.ESCAPE), Release(KC.LSHIFT), Release(KC.LCTRL))
+MACRO_LOCK_PC   = KC.MACRO(Press(KC.LGUI), Tap(KC.L), Release(KC.LGUI))
+MACRO_SCREENSHOT= KC.MACRO(Press(KC.LGUI), Press(KC.LSHIFT), Tap(KC.S), Release(KC.LSHIFT), Release(KC.LGUI))
 
-# 4x4 Key Matrix Map (16 total positions)
-# Note: Position (Row 0, Col 0) is occupied by physical Encoder knob on PCB.
-# In keymap array below, key index 0 is assigned KC.NO or layer switch/encoder key.
+# Example Text Macro
+MACRO_MY_EMAIL  = KC.MACRO("user@example.com")
 
-# --- LAYER DEFINITIONS ---
-# Layer 0: Default Numpad & Media Control
-# Layer 1: Productivity Macros & Shortcuts (Hold/Tap TO(1) / MO(1) / TT(1) to activate)
 
-_BASE = 0
-_MACRO = 1
+# ====================================================================
+# KEYMAP LAYERS
+# 16 physical positions in a 4x4 grid.
+# Top-Left slot [R0, C0] is physical Rotary Encoder body (assigned KC.NO).
+# ====================================================================
+
+# Quick Layer Switch Keys:
+# KC.MO(1) -> Hold for Layer 1
+# KC.TO(1) -> Toggle to Layer 1
+# KC.TT(1) -> Tap-Toggle Layer 1
 
 keyboard.keymap = [
-    # LAYER 0: Numpad & Media Layer
-    # [ (R0,C0 ENCODER SLOT),  (R0,C1),  (R0,C2),  (R0,C3) ]
-    # [ (R1,C0),              (R1,C1),  (R1,C2),  (R1,C3) ]
-    # [ (R2,C0),              (R2,C1),  (R2,C2),  (R2,C3) ]
-    # [ (R3,C0),              (R3,C1),  (R3,C2),  (R3,C3) ]
+    # ----------------------------------------------------------------
+    # LAYER 0: NUMPAD & MEDIA CONTROLS (DEFAULT BASE LAYER)
+    # ----------------------------------------------------------------
+    # [ (R0,C0: ENCODER),  (R0,C1): Slash,    (R0,C2): Asterisk, (R0,C3): Layer 1 Hold ]
+    # [ (R1,C0): Num 7,    (R1,C1): Num 8,    (R1,C2): Num 9,    (R1,C3): Minus        ]
+    # [ (R2,C0): Num 4,    (R2,C1): Num 5,    (R2,C2): Num 6,    (R2,C3): Plus         ]
+    # [ (R3,C0): Num 1,    (R3,C1): Num 2,    (R3,C2): Num 3,    (R3,C3): Num Enter    ]
     [
-        KC.NO,          KC.KP_SLASH, KC.KP_ASTERISK, KC.MO(1),
-        KC.KP_7,        KC.KP_8,     KC.KP_9,        KC.KP_MINUS,
-        KC.KP_4,        KC.KP_5,     KC.KP_6,        KC.KP_PLUS,
-        KC.KP_1,        KC.KP_2,     KC.KP_3,        KC.KP_ENTER,
+        KC.NO,          KC.KP_SLASH,    KC.KP_ASTERISK, KC.MO(1),
+        KC.KP_7,        KC.KP_8,        KC.KP_9,        KC.KP_MINUS,
+        KC.KP_4,        KC.KP_5,        KC.KP_6,        KC.KP_PLUS,
+        KC.KP_1,        KC.KP_2,        KC.KP_3,        KC.KP_ENTER,
     ],
 
-    # LAYER 1: Productivity Macros & Function Layer
+    # ----------------------------------------------------------------
+    # LAYER 1: PRODUCTIVITY & MACRO SUITE
+    # ----------------------------------------------------------------
+    # [ (R0,C0: ENCODER),  (R0,C1): Cut,      (R0,C2): Copy,     (R0,C3): Transparent  ]
+    # [ (R1,C0): Sel All,  (R1,C1): Save,     (R1,C2): Paste,    (R1,C3): Screenshot   ]
+    # [ (R2,C0): Lock PC,  (R2,C1): TaskMgr,  (R2,C2): Redo,     (R2,C3): Delete       ]
+    # [ (R3,C0): Home,     (R3,C1): Email,    (R3,C2): End,      (R3,C3): Undo         ]
     [
-        KC.NO,          MACRO_CUT,   MACRO_COPY,     KC.TRNS,
-        MACRO_SELECT_ALL, MACRO_SAVE, MACRO_PASTE,  KC.DELETE,
-        KC.HOME,        KC.UP,       KC.END,         KC.ESCAPE,
-        KC.LEFT,        KC.DOWN,     KC.RIGHT,       MACRO_UNDO,
+        KC.NO,            MACRO_CUT,     MACRO_COPY,     KC.TRNS,
+        MACRO_SELECT_ALL, MACRO_SAVE,    MACRO_PASTE,    MACRO_SCREENSHOT,
+        MACRO_LOCK_PC,    MACRO_TASK_MGR,MACRO_REDO,     KC.DELETE,
+        KC.HOME,          MACRO_MY_EMAIL,KC.END,          MACRO_UNDO,
     ],
 ]
 
-# --- ROTARY ENCODER BEHAVIOR PER LAYER ---
-# encoder_handler.map = [
-#     [ (Encoder 1 CW, Encoder 1 CCW, Encoder 1 Push) ] -> Layer 0
-#     [ (Encoder 1 CW, Encoder 1 CCW, Encoder 1 Push) ] -> Layer 1
-# ]
+# ====================================================================
+# ROTARY ENCODER BEHAVIOR PER LAYER
+# Structure: (( ClockwiseAction, CounterClockwiseAction, PushButtonAction ),)
+# ====================================================================
 encoder_handler.map = [
-    # Layer 0: Volume Control (CW = Vol Up, CCW = Vol Down, Push = Mute/Unmute)
+    # Layer 0: Volume & Mute (CW: Vol Up, CCW: Vol Down, Push: Mute)
     ((KC.AUDIO_VOL_UP, KC.AUDIO_VOL_DOWN, KC.AUDIO_MUTE),),
 
-    # Layer 1: Page Scrolling / Zooming (CW = Scroll Down, CCW = Scroll Up, Push = Play/Pause)
+    # Layer 1: Mouse Scrolling & Media Play/Pause (CW: Scroll Down, CCW: Scroll Up, Push: Play/Pause)
     ((KC.MW_DN, KC.MW_UP, KC.MEDIA_PLAY_PAUSE),),
 ]
 
