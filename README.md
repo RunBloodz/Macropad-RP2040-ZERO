@@ -1,19 +1,19 @@
 # 15-Key + 1 Rotary Encoder Macropad (RP2040-Zero & KMK Firmware)
 
-This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware.
+This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **Vial GUI / Graphical Configurator Support**.
 
 ---
 
 ## Table of Contents
 1. [Overview & Features](#overview--features)
-2. [Recognizable USB Identification](#recognizable-usb-identification)
+2. [Devices & Printers & Graphical Configuration (Vial)](#devices--printers--graphical-configuration-vial)
 3. [Pinout & Hardware Connections](#pinout--hardware-connections)
 4. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
 5. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
 6. [Rotary Encoder Setup](#rotary-encoder-setup)
 7. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
 8. [CircuitPython & KMK Installation](#circuitpython--kmk-installation)
-9. [Customizing Keymaps & Macros](#customizing-keymaps--macros)
+9. [Customizing Keymaps & Macros (GUI vs Code)](#customizing-keymaps--macros-gui-vs-code)
 
 ---
 
@@ -22,23 +22,41 @@ This repository contains the complete firmware code, USB configuration, and hard
 - **Microcontroller**: Waveshare RP2040-Zero (RP2040 MCU with 29 GPIOs, USB-C)
 - **Matrix**: 4x4 Grid (15 mechanical switches + 1 rotary encoder in top-left position `Row 0, Col 0`)
 - **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation, separate push button pin)
-- **Firmware Framework**: KMK Firmware running on CircuitPython
+- **Firmware Framework**: KMK Firmware running on CircuitPython with Vial dynamic GUI engine
 - **Features**:
-  - Recognized by Windows/macOS/Linux as **"15-Key RP2040 Macropad"** by **"Custom Tech"**
+  - Recognized by Windows/macOS/Linux under **Devices & Printers** as **"15-Key RP2040 Macropad"** by **"Custom Tech"**
+  - **Graphical Key Remapping**: Configure keys, macros, layers, and rotary encoder actions visually in real-time via **Vial Web app (`https://vial.rocks`)** or standalone Vial Desktop App—no coding required!
   - Full Anti-Ghosting / NKRO with diode matrix
   - Multi-layer support (Layer 0: Numpad/Media, Layer 1: Shortcuts & Productivity Macros)
-  - Customizable Rotary Encoder rotation and click functions per layer
   - No backlight (maximizes power efficiency and simplifies build)
 
 ---
 
-## Recognizable USB Identification
+## Devices & Printers & Graphical Configuration (Vial)
 
-When plugged into your computer via USB, `boot.py` configures the device so it immediately identifies as a standard USB HID Keyboard with clear device branding in Device Manager, System Settings, or Bluetooth & Devices menu:
+### 1. Windows "Devices and Printers" Recognition
+When you plug the macropad into Windows or macOS via USB:
+- Open **Control Panel > Devices and Printers** (or **Settings > Bluetooth & Devices**).
+- You will see **"15-Key RP2040 Macropad"** listed as a recognized USB HID Keyboard device.
+- Right-clicking the device shows properties, device status, and manufacturer (`Custom Tech`).
 
-- **Device Name**: `15-Key RP2040 Macropad`
-- **Manufacturer**: `Custom Tech`
-- **Supported HID Protocols**: Keyboard, Consumer Control (Volume/Media), Mouse (Scrolling)
+```
++-------------------------------------------------------------+
+|  Devices and Printers                                       |
+|  +---------------------+                                    |
+|  | [⌨️]                 |  Device: 15-Key RP2040 Macropad     |
+|  | 15-Key RP2040       |  Manufacturer: Custom Tech          |
+|  | Macropad            |  Status: Connected & Operational   |
+|  +---------------------+                                    |
++-------------------------------------------------------------+
+```
+
+### 2. Graphical Customization via Web / App (Vial)
+Instead of manually opening Python files to change keybindings:
+1. Open your browser and navigate to **[vial.rocks](https://vial.rocks)** (or open the offline **Vial Desktop App**).
+2. Click **"Connect"** and select **"15-Key RP2040 Macropad"** from the browser USB popup.
+3. A visual 4x4 grid and encoder control panel will load instantly!
+4. **Drag and drop keybindings, rebind encoder rotation/click, or record macros graphically in real-time.** Changes save to the macropad instantly without rebooting or reflashing.
 
 ---
 
@@ -128,7 +146,7 @@ Our firmware defaults to `DiodeOrientation.COL2ROW`.
 
 #### 2. `ROW2COL`:
 If you accidentally solder the diodes in reverse (Cathode pointing to Column):
-Change line 32 in `code.py`:
+Change line in `code.py`:
 ```python
 keyboard.diode_orientation = DiodeOrientation.ROW2COL
 ```
@@ -177,7 +195,7 @@ An EC11 rotary encoder has 5 pins:
 3. Solder the diode Cathodes together across each row:
    - **Row 0**: Connect diode cathodes of keys `(0,1)`, `(0,2)`, `(0,3)`.
    - **Row 1**: Connect diode cathodes of keys `(1,0)`, `(1,1)`, `(1,2)`, `(1,3)`.
-   - **Row 2**: Connect diode cathodes of keys `(2,0)`, `(2,1)`, `(2,2)`, `(3,2)`.
+   - **Row 2**: Connect diode cathodes of keys `(2,0)`, `(2,1)`, `(2,2)`, `(2,3)`.
    - **Row 3**: Connect diode cathodes of keys `(3,0)`, `(3,1)`, `(3,2)`, `(3,3)`.
 4. Clip off the excess diode legs after soldering each row wire.
 
@@ -222,6 +240,13 @@ Solder lead wires from each row and column bus to the RP2040-Zero pins:
 
 ---
 
+### Step 6: Visual Inspection & Continuity Check
+1. **Check for Shorts**: Inspect all joints with a magnifying glass or multimeter continuity mode. Ensure no adjacent wires or RP2040-Zero pads touch each other.
+2. **Diode Check**: Confirm that all diode black stripes face towards the row wires.
+3. **GND Check**: Verify that encoder center pin and push switch share a clean connection to `GND`.
+
+---
+
 ## CircuitPython & KMK Installation
 
 1. **Install CircuitPython**:
@@ -238,45 +263,28 @@ Solder lead wires from each row and column bus to the RP2040-Zero pins:
 
 ---
 
-## Customizing Keymaps & Macros
+## Customizing Keymaps & Macros (GUI vs Code)
 
-Customization is done directly inside `code.py` using standard Python variables. You can edit `code.py` with any text editor (VSCode, Notepad++, Mu Editor, etc.) and save it—CircuitPython automatically reloads the keyboard instantly!
+You have two options for customizing your macropad:
 
-### 1. Creating Custom Hotkey Combinations
+### Option A: Graphical Web GUI (Vial) - Recommended
+1. Open **[vial.rocks](https://vial.rocks)** in Chrome/Edge/Opera.
+2. Click **Connect**, select **15-Key RP2040 Macropad**.
+3. Remap keys, macros, and rotary encoder actions visually with real-time live preview.
+
+### Option B: Code-based Customization
+Directly edit `code.py` on the `CIRCUITPY` USB drive:
 ```python
-# Hotkey example: Ctrl + Shift + Esc (Task Manager)
+# Custom Hotkey Combination
 MACRO_TASK_MGR = KC.MACRO(Press(KC.LCTRL), Press(KC.LSHIFT), Tap(KC.ESCAPE), Release(KC.LSHIFT), Release(KC.LCTRL))
 
-# Hotkey example: Win + L (Lock Screen)
-MACRO_LOCK_PC = KC.MACRO(Press(KC.LGUI), Tap(KC.L), Release(KC.LGUI))
-```
-
-### 2. Creating Text Auto-Type Macros
-```python
-MACRO_SIGNATURE = KC.MACRO("Best regards,\nJohn Doe")
-```
-
-### 3. Assigning Keys in the 4x4 Grid
-Edit `keyboard.keymap` array:
-```python
+# Custom Keymap Grid
 keyboard.keymap = [
-    # LAYER 0
     [
         KC.NO,          KC.KP_SLASH,    KC.KP_ASTERISK, KC.MO(1),
         KC.KP_7,        KC.KP_8,        KC.KP_9,        KC.KP_MINUS,
         KC.KP_4,        KC.KP_5,        KC.KP_6,        KC.KP_PLUS,
         KC.KP_1,        KC.KP_2,        KC.KP_3,        KC.KP_ENTER,
     ],
-]
-```
-
-### 4. Customizing the Rotary Encoder per Layer
-```python
-encoder_handler.map = [
-    # Layer 0: Volume control & mute button
-    ((KC.AUDIO_VOL_UP, KC.AUDIO_VOL_DOWN, KC.AUDIO_MUTE),),
-
-    # Layer 1: Mouse Scroll Down, Mouse Scroll Up, Play/Pause
-    ((KC.MW_DN, KC.MW_UP, KC.MEDIA_PLAY_PAUSE),),
 ]
 ```
