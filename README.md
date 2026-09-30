@@ -1,19 +1,20 @@
 # 15-Key + 1 Rotary Encoder Macropad (RP2040-Zero & KMK Firmware)
 
-This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **Vial GUI / Graphical Configurator Support**.
+This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **Device Manager & Vial GUI Support**.
 
 ---
 
 ## Table of Contents
 1. [Overview & Features](#overview--features)
-2. [Devices & Printers & Graphical Configuration (Vial)](#devices--printers--graphical-configuration-vial)
-3. [Pinout & Hardware Connections](#pinout--hardware-connections)
-4. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
-5. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
-6. [Rotary Encoder Setup](#rotary-encoder-setup)
-7. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
-8. [CircuitPython & KMK Installation](#circuitpython--kmk-installation)
-9. [Customizing Keymaps & Macros (GUI vs Code)](#customizing-keymaps--macros-gui-vs-code)
+2. [Device Manager & Hardware Identification](#device-manager--hardware-identification)
+3. [Configuring Keys via Windows Device Manager & Software](#configuring-keys-via-windows-device-manager--software)
+4. [Pinout & Hardware Connections](#pinout--hardware-connections)
+5. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
+6. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
+7. [Rotary Encoder Setup](#rotary-encoder-setup)
+8. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
+9. [CircuitPython & KMK Installation](#circuitpython--kmk-installation)
+10. [Customizing Keymaps & Macros](#customizing-keymaps--macros)
 
 ---
 
@@ -24,39 +25,60 @@ This repository contains the complete firmware code, USB configuration, and hard
 - **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation, separate push button pin)
 - **Firmware Framework**: KMK Firmware running on CircuitPython with Vial dynamic GUI engine
 - **Features**:
-  - Recognized by Windows/macOS/Linux under **Devices & Printers** as **"15-Key RP2040 Macropad"** by **"Custom Tech"**
-  - **Graphical Key Remapping**: Configure keys, macros, layers, and rotary encoder actions visually in real-time via **Vial Web app (`https://vial.rocks`)** or standalone Vial Desktop App—no coding required!
+  - Recognized natively in **Windows Device Manager** as **"15-Key RP2040 Macropad"** under Keyboards and Human Interface Devices
+  - **3 Flexible Configuration Methods**:
+    1. **Direct Web/App GUI (Vial / `https://vial.rocks`)**: Plug in and rebind keys instantly without reflashing
+    2. **Windows Device Manager + PowerToys Keyboard Manager**: Customize key behavior per-device natively in Windows
+    3. **On-board Python Script (`code.py`)**: Directly edit python code on the USB drive
   - Full Anti-Ghosting / NKRO with diode matrix
   - Multi-layer support (Layer 0: Numpad/Media, Layer 1: Shortcuts & Productivity Macros)
   - No backlight (maximizes power efficiency and simplifies build)
 
 ---
 
-## Devices & Printers & Graphical Configuration (Vial)
+## Device Manager & Hardware Identification
 
-### 1. Windows "Devices and Printers" Recognition
-When you plug the macropad into Windows or macOS via USB:
-- Open **Control Panel > Devices and Printers** (or **Settings > Bluetooth & Devices**).
-- You will see **"15-Key RP2040 Macropad"** listed as a recognized USB HID Keyboard device.
-- Right-clicking the device shows properties, device status, and manufacturer (`Custom Tech`).
+When connected via USB, `boot.py` supplies custom USB HID descriptors so Windows Device Manager registers the device with its full name and manufacturer details:
+
+1. Press `Win + X` and select **Device Manager** (or type `devmgmt.msc` in Run).
+2. Expand **Keyboards** and **Human Interface Devices (HID)**.
+3. You will see **"15-Key RP2040 Macropad"** listed under connected devices with Manufacturer **"Custom Tech"**.
 
 ```
-+-------------------------------------------------------------+
-|  Devices and Printers                                       |
-|  +---------------------+                                    |
-|  | [⌨️]                 |  Device: 15-Key RP2040 Macropad     |
-|  | 15-Key RP2040       |  Manufacturer: Custom Tech          |
-|  | Macropad            |  Status: Connected & Operational   |
-|  +---------------------+                                    |
-+-------------------------------------------------------------+
+[Device Manager]
+ ├── ⌨️ Keyboards
+ │    └── ⌨️ 15-Key RP2040 Macropad (Custom Tech)
+ └── 🎮 Human Interface Devices
+      └── 🔌 HID-compliant consumer control device
 ```
 
-### 2. Graphical Customization via Web / App (Vial)
-Instead of manually opening Python files to change keybindings:
-1. Open your browser and navigate to **[vial.rocks](https://vial.rocks)** (or open the offline **Vial Desktop App**).
-2. Click **"Connect"** and select **"15-Key RP2040 Macropad"** from the browser USB popup.
-3. A visual 4x4 grid and encoder control panel will load instantly!
-4. **Drag and drop keybindings, rebind encoder rotation/click, or record macros graphically in real-time.** Changes save to the macropad instantly without rebooting or reflashing.
+---
+
+## Configuring Keys via Windows Device Manager & Software
+
+To configure and remap key functions for your macropad on Windows, you have three powerful options:
+
+### Method 1: Windows PowerToys (Device-Specific Native Windows Remapping)
+Microsoft provides **Microsoft PowerToys Keyboard Manager**, which directly interfaces with HID keyboard devices detected in Device Manager:
+1. Install **Microsoft PowerToys** (available from Microsoft Store or GitHub).
+2. Open **PowerToys > Keyboard Manager**.
+3. Click **Remap a key** or **Remap a shortcut**.
+4. Press any key on your **15-Key RP2040 Macropad**—PowerToys will detect the keypress from the macropad and allow you to reassign it to any key, media action, shortcut, or application launch in Windows!
+
+### Method 2: Real-time Web GUI Remapping (Vial / WebUSB)
+You can configure keybindings and macros directly on the hardware in real-time:
+1. Open Chrome/Edge/Opera and go to **[vial.rocks](https://vial.rocks)** (or use the Vial Desktop App).
+2. Click **Connect** and select **15-Key RP2040 Macropad**.
+3. Drag and drop keys, rebind rotary encoder turns/clicks, or create macros graphically. Changes save directly to the macropad memory instantly!
+
+### Method 3: AutoHotkey (AHK Scripting)
+For complex automation on Windows, target keypresses sent by the macropad using AutoHotkey scripts:
+```autohotkey
+; AutoHotkey script for 15-Key Macropad
+Numpad1::
+Run, notepad.exe
+return
+```
 
 ---
 
@@ -263,17 +285,20 @@ Solder lead wires from each row and column bus to the RP2040-Zero pins:
 
 ---
 
-## Customizing Keymaps & Macros (GUI vs Code)
+## Customizing Keymaps & Macros
 
-You have two options for customizing your macropad:
+You have three convenient ways to customize your macropad keymaps:
 
-### Option A: Graphical Web GUI (Vial) - Recommended
-1. Open **[vial.rocks](https://vial.rocks)** in Chrome/Edge/Opera.
-2. Click **Connect**, select **15-Key RP2040 Macropad**.
-3. Remap keys, macros, and rotary encoder actions visually with real-time live preview.
+### Option A: Web GUI (Vial / `vial.rocks`)
+- Open **[vial.rocks](https://vial.rocks)** in your web browser.
+- Select **15-Key RP2040 Macropad** and dynamically assign keys and macros via drag-and-drop.
 
-### Option B: Code-based Customization
-Directly edit `code.py` on the `CIRCUITPY` USB drive:
+### Option B: Windows PowerToys Keyboard Manager
+- Open **PowerToys > Keyboard Manager**.
+- Select the **15-Key RP2040 Macropad** key to remap to any shortcut, key, or program.
+
+### Option C: Python Code Customization
+Directly edit `code.py` on the `CIRCUITPY` drive:
 ```python
 # Custom Hotkey Combination
 MACRO_TASK_MGR = KC.MACRO(Press(KC.LCTRL), Press(KC.LSHIFT), Tap(KC.ESCAPE), Release(KC.LSHIFT), Release(KC.LCTRL))
