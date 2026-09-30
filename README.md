@@ -1,11 +1,11 @@
 # 15-Key + 1 Rotary Encoder Macropad (RP2040-Zero & KMK Firmware)
 
-This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **pip installation & deployment tool support**.
+This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **pip installation, Pipkin support, & deployment tools**.
 
 ---
 
 ## Table of Contents
-1. [Quick Start (pip install)](#quick-start-pip-install)
+1. [Quick Start (pip install & pipkin)](#quick-start-pip-install--pipkin)
 2. [Overview & Features](#overview--features)
 3. [Device Manager & Hardware Identification](#device-manager--hardware-identification)
 4. [Configuring Keys via Windows Device Manager & Software](#configuring-keys-via-windows-device-manager--software)
@@ -19,8 +19,9 @@ This repository contains the complete firmware code, USB configuration, and hard
 
 ---
 
-## Quick Start (pip install)
+## Quick Start (pip install & pipkin)
 
+### Option 1: Standard pip & `macropad-deploy`
 You can install this project directly via `pip` and use the built-in `macropad-deploy` CLI command to automatically find your connected RP2040-Zero board (`CIRCUITPY` drive) and copy `code.py` and `boot.py`:
 
 ```bash
@@ -33,6 +34,14 @@ pip install .
 
 # Automatically deploy firmware files to connected CIRCUITPY drive
 macropad-deploy
+```
+
+### Option 2: Installing CircuitPython Libraries via Pipkin
+If you use **Pipkin** (the CircuitPython package manager) to manage libraries directly on your target RP2040 board:
+
+```bash
+# Install dependencies directly to connected CIRCUITPY drive using pipkin
+pipkin install -r requirements-pipkin.txt
 ```
 
 ---

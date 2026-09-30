@@ -1,0 +1,4 @@
+# Pipkin requirements file for CircuitPython / RP2040-Zero Macropad
+# Usage: pipkin install -r requirements-pipkin.txt
+
+adafruit-circuitpython-hid
