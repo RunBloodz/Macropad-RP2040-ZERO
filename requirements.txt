@@ -1,0 +1,6 @@
+# CircuitPython & KMK Firmware Dependencies for 15-Key RP2040 Macropad
+# Note: For CircuitPython boards (RP2040-Zero), these modules are placed directly
+# onto the CIRCUITPY drive inside the /lib/ or root folder.
+
+kmk_firmware>=0.4.0
+adafruit-circuitpython-hid>=5.3.0
