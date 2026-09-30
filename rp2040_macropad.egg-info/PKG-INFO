@@ -1,39 +1,31 @@
+Metadata-Version: 2.4
+Name: rp2040-macropad
+Version: 0.1.0
+Summary: Firmware and deployment tool for 15-Key RP2040 Macropad with Rotary Encoder
+Author-email: Custom Tech <info@example.com>
+Project-URL: Homepage, https://github.com/example/rp2040-macropad
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
+
 # 15-Key + 1 Rotary Encoder Macropad (RP2040-Zero & KMK Firmware)
 
-This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **pip installation & deployment tool support**.
+This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **Device Manager & Vial GUI Support**.
 
 ---
 
 ## Table of Contents
-1. [Quick Start (pip install)](#quick-start-pip-install)
-2. [Overview & Features](#overview--features)
-3. [Device Manager & Hardware Identification](#device-manager--hardware-identification)
-4. [Configuring Keys via Windows Device Manager & Software](#configuring-keys-via-windows-device-manager--software)
-5. [Pinout & Hardware Connections](#pinout--hardware-connections)
-6. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
-7. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
-8. [Rotary Encoder Setup](#rotary-encoder-setup)
-9. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
-10. [CircuitPython & KMK Installation](#circuitpython--kmk-installation)
-11. [Customizing Keymaps & Macros](#customizing-keymaps--macros)
-
----
-
-## Quick Start (pip install)
-
-You can install this project directly via `pip` and use the built-in `macropad-deploy` CLI command to automatically find your connected RP2040-Zero board (`CIRCUITPY` drive) and copy `code.py` and `boot.py`:
-
-```bash
-# Clone the repository
-git clone https://github.com/example/rp2040-macropad.git
-cd rp2040-macropad
-
-# Install package via pip
-pip install .
-
-# Automatically deploy firmware files to connected CIRCUITPY drive
-macropad-deploy
-```
+1. [Overview & Features](#overview--features)
+2. [Device Manager & Hardware Identification](#device-manager--hardware-identification)
+3. [Configuring Keys via Windows Device Manager & Software](#configuring-keys-via-windows-device-manager--software)
+4. [Pinout & Hardware Connections](#pinout--hardware-connections)
+5. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
+6. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
+7. [Rotary Encoder Setup](#rotary-encoder-setup)
+8. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
+9. [CircuitPython & KMK Installation](#circuitpython--kmk-installation)
+10. [Customizing Keymaps & Macros](#customizing-keymaps--macros)
 
 ---
 
@@ -300,7 +292,7 @@ Solder lead wires from each row and column bus to the RP2040-Zero pins:
    - Copy the `kmk` directory into the root directory of the `CIRCUITPY` drive.
 
 3. **Deploy Firmware Files**:
-   - Run `macropad-deploy` from your terminal or copy `boot.py` and `code.py` directly onto `CIRCUITPY`.
+   - Copy `boot.py` and `code.py` from this repository directly onto the root of `CIRCUITPY`.
 
 ---
 
