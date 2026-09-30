@@ -1,39 +1,49 @@
-# 15-Key + 1 Rotary Encoder + Analog Axis Gamepad (RP2040-Zero & Adafruit TinyUSB)
+# 15-Key + 1 Rotary Encoder + Analog Axis Gamepad (RP2040-Zero)
 
-This repository contains the complete firmware code, USB configuration, persistent NVM calibration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder + 1 Analog Axis (Handbrake / Potentiometer) USB Gamepad Controller** driven by Waveshare RP2040-Zero and CircuitPython (`adafruit_tinyusb` + `adafruit_hid`).
+This repository contains the complete firmware code (CircuitPython & Arduino C++ `.ino`), USB configuration, persistent EEPROM/NVM calibration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder + 1 Analog Axis (Handbrake / Potentiometer) USB Gamepad Controller** driven by Waveshare RP2040-Zero.
 
 ---
 
 ## Table of Contents
-1. [Quick Start (pip install & pipkin)](#quick-start-pip-install--pipkin)
-2. [Overview & Features](#overview--features)
-3. [Serial Control Protocol & Calibration Commands](#serial-control-protocol--calibration-commands)
-4. [Gamepad Testing in Windows (`joy.cpl`) & Device Manager](#gamepad-testing-in-windows-joycpl--device-manager)
-5. [Gamepad Layout & Button Assignment](#gamepad-layout--button-assignment)
-6. [Pinout & Hardware Connections](#pinout--hardware-connections)
-7. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
-8. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
-9. [Rotary Encoder & Analog Axis Setup](#rotary-encoder--analog-axis-setup)
-10. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
-11. [CircuitPython Installation](#circuitpython-installation)
-12. [Customizing Gamepad Mapping & Profiles](#customizing-gamepad-mapping--profiles)
+1. [Arduino IDE Installation & Setup (.ino)](#arduino-ide-installation--setup-ino)
+2. [Quick Start (pip install & CircuitPython)](#quick-start-pip-install--circuitpython)
+3. [Overview & Features](#overview--features)
+4. [Serial Control Protocol & Calibration Commands](#serial-control-protocol--calibration-commands)
+5. [Gamepad Testing in Windows (`joy.cpl`) & Device Manager](#gamepad-testing-in-windows-joycpl--device-manager)
+6. [Gamepad Layout & Button Assignment](#gamepad-layout--button-assignment)
+7. [Pinout & Hardware Connections](#pinout--hardware-connections)
+8. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
+9. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
+10. [Rotary Encoder & Analog Axis Setup](#rotary-encoder--analog-axis-setup)
+11. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
 
 ---
 
-## Quick Start (pip install & pipkin)
+## Arduino IDE Installation & Setup (.ino)
+
+If you prefer programming the RP2040-Zero in **C++ / Arduino IDE**:
+
+1. **Install Board Package**:
+   - In Arduino IDE, go to **Tools > Board > Boards Manager...**
+   - Search for **Raspberry Pi Pico/RP2040 by Earle F. Philhower** and install it.
+2. **Open Sketch**:
+   - Open `macropad/macropad.ino` in Arduino IDE.
+3. **Configure Board Settings**:
+   - **Board**: `Raspberry Pi Pico` or `Waveshare RP2040-Zero`
+   - **USB Stack**: `Adafruit TinyUSB`
+4. **Compile & Upload**:
+   - Put RP2040-Zero into bootloader mode (hold `BOOT` while plugging in USB).
+   - Click **Upload** in Arduino IDE.
+
+---
+
+## Quick Start (pip install & CircuitPython)
 
 ### Option 1: Standard pip & `macropad-deploy`
-Install this project directly via `pip` and use the built-in `macropad-deploy` CLI command to automatically find your connected RP2040-Zero board (`CIRCUITPY` drive) and copy `code.py` and `boot.py`:
-
 ```bash
-# Clone the repository
 git clone https://github.com/example/rp2040-macropad.git
 cd rp2040-macropad
-
-# Install package via pip
 pip install .
-
-# Automatically deploy firmware files to connected CIRCUITPY drive
 macropad-deploy
 ```
 
@@ -48,16 +58,10 @@ pipkin install -r requirements-pipkin.txt
 
 - **Microcontroller**: Waveshare RP2040-Zero (RP2040 MCU with 29 GPIOs, USB-C)
 - **Matrix**: 4x4 Grid (15 mechanical switches + 1 rotary encoder in top-left position `Row 0, Col 0`)
-- **Analog Axis**: Potentiometer / Handbrake input on **GP26 (ADC0)** with non-volatile memory (NVM) persistent calibration and deadzone processing
+- **Analog Axis**: Potentiometer / Handbrake input on **GP26 (ADC0)** with EEPROM/NVM persistent calibration and deadzone processing
 - **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation mapped to Joystick X-Axis Steering, push button mapped to Gamepad Button 16)
-- **USB Stack**: Adafruit TinyUSB / HID (`adafruit_tinyusb.hid` & `adafruit_hid`)
+- **Firmware Support**: Both **Arduino C++ (`macropad/macropad.ino`)** and **CircuitPython (`code.py`)**
 - **Serial Calibration Protocol**: Non-blocking serial protocol over USB CDC for real-time calibration (`PING`, `READ`, `GET_CONFIG`, `SET`, `SAVE`)
-- **Features**:
-  - Recognized natively in Windows/Linux/macOS as **"15-Key RP2040 Gamepad Controller"**
-  - **Windows Game Controllers Utility (`joy.cpl`)**: Test all 16 buttons, steering X-axis, and handbrake Z-axis natively
-  - Persistent deadzone and min/max calibration saved directly to EEPROM/NVM (`microcontroller.nvm`)
-  - Hardware-level anti-ghosting with diode matrix (`COL2ROW`)
-  - Multi-profile support (Profile 0: Standard Gamepad Buttons 1..16 + Steering Axis, Profile 1: Flight / Sim Racing Hotkeys)
 
 ---
 
@@ -68,10 +72,10 @@ The macropad provides a non-blocking serial communication interface via USB Seri
 | Command | Response Example | Description |
 | :--- | :--- | :--- |
 | `PING` | `PONG` | Verifies serial connection |
-| `READ` | `RAW:32768` | Reads current 16-bit raw ADC potentiometer value (0..65535) |
-| `GET_CONFIG` | `CONF:0:65535:5:5` | Returns current calibration parameters (`min:max:deadzone_start:deadzone_end`) |
+| `READ` | `RAW:32768` | Reads current raw ADC potentiometer value |
+| `GET_CONFIG` | `CONF:0:1023:0:0` | Returns current calibration parameters (`min:max:deadzone_start:deadzone_end`) |
 | `SET <min> <max> <dz_start> <dz_end>` | `OK` or `SET_ERR` | Updates runtime calibration settings in memory |
-| `SAVE` | `SAVED` | Flashes calibration values into non-volatile flash memory (`microcontroller.nvm`) |
+| `SAVE` | `SAVED` | Flashes calibration values into non-volatile EEPROM/flash memory |
 
 ---
 
@@ -147,11 +151,3 @@ The macropad provides a non-blocking serial communication interface via USB Seri
 3. **Column Bus**: Solder Pin 2 down each column (`GP4..GP7`).
 4. **Rotary Encoder**: Connect Pins A/B to `GP8` & `GP9`, Switch to `GP10`, Center pin to `GND`.
 5. **Analog Handbrake (GP26)**: Connect potentiometer outer pins to `3V3` and `GND`, and wiper wiper signal to `GP26`.
-
----
-
-## CircuitPython Installation
-
-1. Hold `BOOT` button on RP2040-Zero, connect USB, and flash CircuitPython `.uf2`.
-2. Run `macropad-deploy` or copy `code.py` and `boot.py` to the `CIRCUITPY` drive.
-3. Place `adafruit_hid` and `adafruit_tinyusb` in `CIRCUITPY/lib/`.
