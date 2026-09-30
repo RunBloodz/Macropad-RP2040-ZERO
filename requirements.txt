@@ -1,8 +1,4 @@
-# CircuitPython & KMK Firmware Dependencies for 15-Key RP2040 Macropad
+# CircuitPython Dependencies for 15-Key RP2040 Macropad
 #
-# Installation option A (Python Package):
-#   pip install .
-#   macropad-deploy
-#
-# Installation option B (Manual Copying):
-#   Copy code.py and boot.py directly onto your CIRCUITPY drive
+# These standard CircuitPython libraries are placed in the /lib folder of CIRCUITPY
+adafruit-circuitpython-hid>=5.3.0

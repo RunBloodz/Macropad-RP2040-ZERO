@@ -15,7 +15,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = []
+dependencies = [
+    "adafruit-circuitpython-hid>=5.3.0",
+]
 
 [project.scripts]
 macropad-deploy = "macropad.cli:main"

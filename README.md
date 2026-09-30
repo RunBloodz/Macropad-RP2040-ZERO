@@ -1,6 +1,6 @@
-# 15-Key + 1 Rotary Encoder Macropad (RP2040-Zero & KMK Firmware)
+# 15-Key + 1 Rotary Encoder Macropad (RP2040-Zero & Pure CircuitPython)
 
-This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero, CircuitPython, and KMK Firmware with **pip installation, Pipkin support, & deployment tools**.
+This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) Macropad** driven by Waveshare RP2040-Zero and native CircuitPython (`keypad` + `rotaryio` + `adafruit_hid`).
 
 ---
 
@@ -14,7 +14,7 @@ This repository contains the complete firmware code, USB configuration, and hard
 7. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
 8. [Rotary Encoder Setup](#rotary-encoder-setup)
 9. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
-10. [CircuitPython & KMK Installation](#circuitpython--kmk-installation)
+10. [CircuitPython Installation](#circuitpython-installation)
 11. [Customizing Keymaps & Macros](#customizing-keymaps--macros)
 
 ---
@@ -51,14 +51,14 @@ pipkin install -r requirements-pipkin.txt
 - **Microcontroller**: Waveshare RP2040-Zero (RP2040 MCU with 29 GPIOs, USB-C)
 - **Matrix**: 4x4 Grid (15 mechanical switches + 1 rotary encoder in top-left position `Row 0, Col 0`)
 - **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation, separate push button pin)
-- **Firmware Framework**: KMK Firmware running on CircuitPython with Vial dynamic GUI engine
+- **Firmware Engine**: Pure CircuitPython using built-in `keypad.KeyMatrix` and `rotaryio`
 - **Features**:
   - Recognized natively in **Windows Device Manager** as **"15-Key RP2040 Macropad"** under Keyboards and Human Interface Devices
   - **3 Flexible Configuration Methods**:
-    1. **Direct Web/App GUI (Vial / `https://vial.rocks`)**: Plug in and rebind keys instantly without reflashing
-    2. **Windows Device Manager + PowerToys Keyboard Manager**: Customize key behavior per-device natively in Windows
-    3. **On-board Python Script (`code.py`)**: Directly edit python code on the USB drive
-  - Full Anti-Ghosting / NKRO with diode matrix
+    1. **Windows Device Manager + PowerToys Keyboard Manager**: Customize key behavior per-device natively in Windows
+    2. **On-board Python Script (`code.py`)**: Directly edit python code on the USB drive
+    3. **AutoHotkey Scripting**: Trigger complex desktop automation
+  - Hardware-level anti-ghosting with diode matrix
   - Multi-layer support (Layer 0: Numpad/Media, Layer 1: Shortcuts & Productivity Macros)
   - No backlight (maximizes power efficiency and simplifies build)
 
@@ -84,7 +84,7 @@ When connected via USB, `boot.py` supplies custom USB HID descriptors so Windows
 
 ## Configuring Keys via Windows Device Manager & Software
 
-To configure and remap key functions for your macropad on Windows, you have three powerful options:
+To configure and remap key functions for your macropad on Windows, you have flexible options:
 
 ### Method 1: Windows PowerToys (Device-Specific Native Windows Remapping)
 Microsoft provides **Microsoft PowerToys Keyboard Manager**, which directly interfaces with HID keyboard devices detected in Device Manager:
@@ -93,20 +93,8 @@ Microsoft provides **Microsoft PowerToys Keyboard Manager**, which directly inte
 3. Click **Remap a key** or **Remap a shortcut**.
 4. Press any key on your **15-Key RP2040 Macropad**—PowerToys will detect the keypress from the macropad and allow you to reassign it to any key, media action, shortcut, or application launch in Windows!
 
-### Method 2: Real-time Web GUI Remapping (Vial / WebUSB)
-You can configure keybindings and macros directly on the hardware in real-time:
-1. Open Chrome/Edge/Opera and go to **[vial.rocks](https://vial.rocks)** (or use the Vial Desktop App).
-2. Click **Connect** and select **15-Key RP2040 Macropad**.
-3. Drag and drop keys, rebind rotary encoder turns/clicks, or create macros graphically. Changes save directly to the macropad memory instantly!
-
-### Method 3: AutoHotkey (AHK Scripting)
-For complex automation on Windows, target keypresses sent by the macropad using AutoHotkey scripts:
-```autohotkey
-; AutoHotkey script for 15-Key Macropad
-Numpad1::
-Run, notepad.exe
-return
-```
+### Method 2: Python Code Customization (`code.py`)
+Directly edit `code.py` on your macropad USB drive (`CIRCUITPY`).
 
 ---
 
@@ -171,7 +159,7 @@ Diodes allow current to flow in only one direction:
 
 ### Orientation Setup: `COL2ROW` vs `ROW2COL`
 
-Our firmware defaults to `DiodeOrientation.COL2ROW`.
+Our firmware defaults to `columns_to_anodes=True` (equivalent to `COL2ROW`).
 
 #### 1. `COL2ROW` (Recommended & Default in `code.py`):
 - Connect **Anode (+)** to key switch terminal / Column line.
@@ -196,9 +184,13 @@ Our firmware defaults to `DiodeOrientation.COL2ROW`.
 
 #### 2. `ROW2COL`:
 If you accidentally solder the diodes in reverse (Cathode pointing to Column):
-Change line in `code.py`:
+In `code.py`, set:
 ```python
-keyboard.diode_orientation = DiodeOrientation.ROW2COL
+matrix = keypad.KeyMatrix(
+    row_pins=ROW_PINS,
+    column_pins=COL_PINS,
+    columns_to_anodes=False, # ROW2COL
+)
 ```
 
 ---
@@ -290,54 +282,31 @@ Solder lead wires from each row and column bus to the RP2040-Zero pins:
 
 ---
 
-### Step 6: Visual Inspection & Continuity Check
-1. **Check for Shorts**: Inspect all joints with a magnifying glass or multimeter continuity mode. Ensure no adjacent wires or RP2040-Zero pads touch each other.
-2. **Diode Check**: Confirm that all diode black stripes face towards the row wires.
-3. **GND Check**: Verify that encoder center pin and push switch share a clean connection to `GND`.
-
----
-
-## CircuitPython & KMK Installation
+## CircuitPython Installation
 
 1. **Install CircuitPython**:
    - Download the latest CircuitPython `.uf2` for **RP2040-Zero**.
    - Hold the `BOOT` button on RP2040-Zero while plugging in USB.
    - Drag and drop the `.uf2` file onto the `RPI-RP2` drive.
 
-2. **Install KMK Firmware**:
-   - Download [KMK Firmware](https://github.com/KMKfw/kmk_firmware).
-   - Copy the `kmk` directory into the root directory of the `CIRCUITPY` drive.
-
-3. **Deploy Firmware Files**:
+2. **Deploy Firmware Files**:
    - Run `macropad-deploy` from your terminal or copy `boot.py` and `code.py` directly onto `CIRCUITPY`.
+   - Copy the `adafruit_hid` library folder onto the `CIRCUITPY/lib/` drive.
 
 ---
 
 ## Customizing Keymaps & Macros
 
-You have three convenient ways to customize your macropad keymaps:
+Edit `code.py` directly on the `CIRCUITPY` drive to customize shortcuts:
 
-### Option A: Web GUI (Vial / `vial.rocks`)
-- Open **[vial.rocks](https://vial.rocks)** in your web browser.
-- Select **15-Key RP2040 Macropad** and dynamically assign keys and macros via drag-and-drop.
-
-### Option B: Windows PowerToys Keyboard Manager
-- Open **PowerToys > Keyboard Manager**.
-- Select the **15-Key RP2040 Macropad** key to remap to any shortcut, key, or program.
-
-### Option C: Python Code Customization
-Directly edit `code.py` on the `CIRCUITPY` drive:
 ```python
-# Custom Hotkey Combination
-MACRO_TASK_MGR = KC.MACRO(Press(KC.LCTRL), Press(KC.LSHIFT), Tap(KC.ESCAPE), Release(KC.LSHIFT), Release(KC.LCTRL))
-
-# Custom Keymap Grid
-keyboard.keymap = [
-    [
-        KC.NO,          KC.KP_SLASH,    KC.KP_ASTERISK, KC.MO(1),
-        KC.KP_7,        KC.KP_8,        KC.KP_9,        KC.KP_MINUS,
-        KC.KP_4,        KC.KP_5,        KC.KP_6,        KC.KP_PLUS,
-        KC.KP_1,        KC.KP_2,        KC.KP_3,        KC.KP_ENTER,
+KEYMAP = {
+    0: [
+        ('NONE', None),                         # Index 0 (Encoder Slot)
+        ('KEY', Keycode.KEYPAD_FORWARD_SLASH),  # Index 1
+        ('KEY', Keycode.KEYPAD_ASTERISK),       # Index 2
+        ('LAYER_HOLD', 1),                      # Index 3
+        # ...
     ],
-]
+}
 ```
