@@ -1,21 +1,22 @@
-# 15-Key + 1 Rotary Encoder USB Gamepad Controller (RP2040-Zero)
+# 15-Key + 1 Rotary Encoder + Analog Axis Gamepad (RP2040-Zero)
 
-This repository contains the complete firmware code, USB configuration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder (4x4 Matrix) USB Gamepad / Macro Controller** driven by Waveshare RP2040-Zero and CircuitPython.
+This repository contains the complete firmware code, USB configuration, persistent NVM calibration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder + 1 Analog Axis (Handbrake / Potentiometer) USB Gamepad Controller** driven by Waveshare RP2040-Zero and CircuitPython.
 
 ---
 
 ## Table of Contents
 1. [Quick Start (pip install & pipkin)](#quick-start-pip-install--pipkin)
 2. [Overview & Features](#overview--features)
-3. [Gamepad Testing in Windows (`joy.cpl`) & Device Manager](#gamepad-testing-in-windows-joycpl--device-manager)
-4. [Gamepad Layout & Button Assignment](#gamepad-layout--button-assignment)
-5. [Pinout & Hardware Connections](#pinout--hardware-connections)
-6. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
-7. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
-8. [Rotary Encoder Setup](#rotary-encoder-setup)
-9. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
-10. [CircuitPython Installation](#circuitpython-installation)
-11. [Customizing Gamepad Mapping & Profiles](#customizing-gamepad-mapping--profiles)
+3. [Serial Control Protocol & Calibration Commands](#serial-control-protocol--calibration-commands)
+4. [Gamepad Testing in Windows (`joy.cpl`) & Device Manager](#gamepad-testing-in-windows-joycpl--device-manager)
+5. [Gamepad Layout & Button Assignment](#gamepad-layout--button-assignment)
+6. [Pinout & Hardware Connections](#pinout--hardware-connections)
+7. [4x4 Matrix Layout & Physical Wiring](#4x4-matrix-layout--physical-wiring)
+8. [Diode Wiring & Orientation Tutorial](#diode-wiring--orientation-tutorial)
+9. [Rotary Encoder & Analog Axis Setup](#rotary-encoder--analog-axis-setup)
+10. [Step-by-Step Soldering Tutorial](#step-by-step-soldering-tutorial)
+11. [CircuitPython Installation](#circuitpython-installation)
+12. [Customizing Gamepad Mapping & Profiles](#customizing-gamepad-mapping--profiles)
 
 ---
 
@@ -37,10 +38,7 @@ macropad-deploy
 ```
 
 ### Option 2: Installing CircuitPython Libraries via Pipkin
-If you use **Pipkin** (the CircuitPython package manager) to manage libraries directly on your target RP2040 board:
-
 ```bash
-# Install dependencies directly to connected CIRCUITPY drive using pipkin
 pipkin install -r requirements-pipkin.txt
 ```
 
@@ -50,42 +48,45 @@ pipkin install -r requirements-pipkin.txt
 
 - **Microcontroller**: Waveshare RP2040-Zero (RP2040 MCU with 29 GPIOs, USB-C)
 - **Matrix**: 4x4 Grid (15 mechanical switches + 1 rotary encoder in top-left position `Row 0, Col 0`)
-- **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation mapped to Joystick X-Axis Steering/Throttle, separate push button pin mapped to Gamepad Button 16)
+- **Analog Axis**: Potentiometer / Handbrake input on **GP26 (ADC0)** with non-volatile memory (NVM) persistent calibration and deadzone processing
+- **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation mapped to Joystick X-Axis Steering, push button mapped to Gamepad Button 16)
 - **USB HID Protocols**: Native Gamepad (`usb_hid.Device.GAMEPAD`), Keyboard, Consumer Control, Mouse
+- **Serial Calibration Protocol**: Non-blocking serial protocol over USB CDC for real-time calibration (`PING`, `READ`, `GET_CONFIG`, `SET`, `SAVE`)
 - **Features**:
   - Recognized natively in Windows/Linux/macOS as **"15-Key RP2040 Gamepad Controller"**
-  - **Windows Game Controllers Utility (`joy.cpl`)**: Test all 16 buttons and joystick axes natively in Windows
+  - **Windows Game Controllers Utility (`joy.cpl`)**: Test all 16 buttons, steering X-axis, and handbrake Z-axis natively
+  - Persistent deadzone and min/max calibration saved directly to EEPROM/NVM (`microcontroller.nvm`)
   - Hardware-level anti-ghosting with diode matrix (`COL2ROW`)
-  - Multi-profile support (Profile 0: Standard Gamepad Buttons 1..16 + Steering Axis, Profile 1: Flight / Sim Racing / Keyboard Hotkeys)
-  - No backlight (maximizes power efficiency and simplifies build)
+  - Multi-profile support (Profile 0: Standard Gamepad Buttons 1..16 + Steering Axis, Profile 1: Flight / Sim Racing Hotkeys)
+
+---
+
+## Serial Control Protocol & Calibration Commands
+
+The macropad provides a non-blocking serial communication interface via USB Serial (CDC) to calibrate the analog handbrake / potentiometer on **GP26**:
+
+| Command | Response Example | Description |
+| :--- | :--- | :--- |
+| `PING` | `PONG` | Verifies serial connection |
+| `READ` | `RAW:32768` | Reads current 16-bit raw ADC potentiometer value (0..65535) |
+| `GET_CONFIG` | `CONF:0:65535:5:5` | Returns current calibration parameters (`min:max:deadzone_start:deadzone_end`) |
+| `SET <min> <max> <dz_start> <dz_end>` | `OK` or `SET_ERR` | Updates runtime calibration settings in memory |
+| `SAVE` | `SAVED` | Flashes calibration values into non-volatile flash memory (`microcontroller.nvm`) |
 
 ---
 
 ## Gamepad Testing in Windows (`joy.cpl`) & Device Manager
 
-When connected via USB, `boot.py` configures standard Gamepad HID descriptors so Windows recognizes the board as a full Game Controller:
-
 1. Press `Win + R`, type `joy.cpl`, and press **Enter**.
-2. You will see **"15-Key RP2040 Gamepad Controller"** listed in the Game Controllers window.
-3. Click **Properties** to open the live test window:
-   - Pressing any key lights up **Buttons 1 through 15**.
-   - Turning the **Rotary Encoder** moves the **X-Axis Joystick indicator** smoothly back and forth (perfect for steering or throttle).
+2. Select **15-Key RP2040 Gamepad Controller** and click **Properties**:
+   - Pressing keys lights up **Buttons 1 through 15**.
+   - Turning the **Rotary Encoder** adjusts the **X-Axis Joystick indicator** (Steering).
+   - Pulling the **Handbrake/Potentiometer (GP26)** moves the **Z-Axis**.
    - Pressing the **Rotary Encoder Push Knob** triggers **Button 16**.
-
-```
-[Windows Game Controllers - joy.cpl]
- ├── Installed Game Controllers:
- │    └── 🎮 15-Key RP2040 Gamepad Controller (Status: OK)
- └── [Properties Window]
-      ├── Buttons: [1] [2] [3] [4] [5] [6] [7] [8] ... [16]
-      └── Axes:    X-Axis (Steering / Encoder Knob)
-```
 
 ---
 
 ## Gamepad Layout & Button Assignment
-
-The 4x4 matrix layout corresponds to 16 physical grid positions. Position `(Row 0, Col 0)` holds the Rotary Encoder knob.
 
 ```
 +-------------------+-------------------+-------------------+-------------------+
@@ -126,111 +127,31 @@ The 4x4 matrix layout corresponds to 16 physical grid positions. Position `(Row 
 | **Rotary Encoder**| Channel A | `GP8` | Rotation pin A (X-Axis) |
 | | Channel B | `GP9` | Rotation pin B (X-Axis) |
 | | Switch (Button)| `GP10` | Gamepad Button 16 (GND on other side) |
-| | Common / GND | `GND` | Ground pin for Encoder |
+| **Analog Handbrake**| Signal Input | `GP26` | Potentiometer / Hall Sensor (ADC0) |
+| **Power / Ground**| 3.3V & GND | `3V3` / `GND` | Power for Potentiometer / Encoder |
 
 ---
 
 ## Diode Wiring & Orientation Tutorial
 
-### Why Use Diodes?
-Diodes prevent "ghosting" or "masking" when holding multiple buttons simultaneously. Recommended diodes: **1N4148** signal diodes (axial or SMD).
-
 ### Diode Polarization
-Diodes allow current to flow in only one direction:
-- **Anode (+)**: Plain body side
-- **Cathode (-)**: Side marked with the **black line / stripe**
-
-```
-          Anode (+)        Cathode (-)
-       +--------------[==|==============]--------------+
-                            Black Stripe
-```
-
-### Orientation Setup: `COL2ROW` vs `ROW2COL`
-
-Our firmware defaults to `columns_to_anodes=True` (equivalent to `COL2ROW`).
-
-#### 1. `COL2ROW` (Recommended & Default in `code.py`):
-- Connect **Anode (+)** to key switch terminal / Column line.
-- Connect **Cathode (- stripe side)** directly to the **Row line**.
-
-```
-  [Column Pin GP4..GP7]
-          |
-          |
-     [Key Switch]
-          |
-          |
-       (Anode)
-       +----+
-       | |> |  Diode (1N4148)
-       +----+
-     (Cathode - Stripe)
-          |
-          v
-    [Row Pin GP0..GP3]
-```
+- **Anode (+)**: Plain body side connected to Column line.
+- **Cathode (-)**: Black stripe side connected to Row line (`COL2ROW`).
 
 ---
 
 ## Step-by-Step Soldering Tutorial
 
-### Required Tools & Materials
-1. **Soldering Iron** (Temperature set to ~320°C–350°C)
-2. **Solder Wire** (60/40 rosin-core or lead-free solder wire)
-3. **Flux Pen** or Paste
-4. **Flush Cutters** (to clip diode legs)
-5. **Solid Core or Stranded Wires** (28-30 AWG)
-6. **15x Mechanical Switches** & **1x EC11 Rotary Encoder**
-7. **15x 1N4148 Diodes**
-8. **Waveshare RP2040-Zero Board**
-
----
-
-### Step 1: Prepare and Solder the Diodes to the Switches
-1. Take a **1N4148 diode**. Bend the **Anode leg** (plain side without stripe) around Pin 1 of a mechanical switch.
-2. Ensure the **Cathode leg** (side with the **black stripe**) points outwards away from the switch.
-3. Apply a small touch of flux and solder the joint. Repeat for all **15 mechanical switches**.
-
-### Step 2: Solder Matrix Rows
-1. Connect diode Cathodes together across each row (Row 0, Row 1, Row 2, Row 3).
-
-### Step 3: Solder Matrix Columns
-1. Connect Pin 2 of all switches down each column (Col 0, Col 1, Col 2, Col 3).
-
-### Step 4: Connect to RP2040-Zero
-1. Solder Row lines to `GP0..GP3`.
-2. Solder Column lines to `GP4..GP7`.
-3. Solder Encoder Pins A & B to `GP8` & `GP9`, Encoder Push Switch to `GP10`, and Common/Center pin to `GND`.
+1. **Diodes to Switches**: Solder diode Anodes to Pin 1 of each switch.
+2. **Row Bus**: Solder diode Cathodes together across each row (`GP0..GP3`).
+3. **Column Bus**: Solder Pin 2 down each column (`GP4..GP7`).
+4. **Rotary Encoder**: Connect Pins A/B to `GP8` & `GP9`, Switch to `GP10`, Center pin to `GND`.
+5. **Analog Handbrake (GP26)**: Connect potentiometer outer pins to `3V3` and `GND`, and wiper wiper signal to `GP26`.
 
 ---
 
 ## CircuitPython Installation
 
-1. **Install CircuitPython**:
-   - Download the latest CircuitPython `.uf2` for **RP2040-Zero**.
-   - Hold `BOOT` button while plugging in USB, then drag and drop the `.uf2` file onto `RPI-RP2`.
-
-2. **Deploy Firmware Files**:
-   - Run `macropad-deploy` from your terminal or copy `boot.py` and `code.py` directly onto `CIRCUITPY`.
-   - Copy the `adafruit_hid` library folder onto the `CIRCUITPY/lib/` drive.
-
----
-
-## Customizing Gamepad Mapping & Profiles
-
-Edit `code.py` on your `CIRCUITPY` drive to customize button bindings and profiles:
-
-```python
-KEYMAP = {
-    # Profile 0: Gamepad Buttons
-    0: [
-        ('NONE', None),         # Slot 0 (Encoder Knob)
-        ('GAMEPAD', 1),         # Button 1
-        ('GAMEPAD', 2),         # Button 2
-        ('LAYER_HOLD', 1),      # Hold to switch to Profile 1
-        ('GAMEPAD', 3),         # Button 3
-        # ...
-    ],
-}
-```
+1. Hold `BOOT` button on RP2040-Zero, connect USB, and flash CircuitPython `.uf2`.
+2. Run `macropad-deploy` or copy `code.py` and `boot.py` to the `CIRCUITPY` drive.
+3. Place `adafruit_hid` in `CIRCUITPY/lib/`.

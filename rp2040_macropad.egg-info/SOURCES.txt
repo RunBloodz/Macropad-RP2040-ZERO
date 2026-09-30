@@ -9,4 +9,5 @@ rp2040_macropad.egg-info/PKG-INFO
 rp2040_macropad.egg-info/SOURCES.txt
 rp2040_macropad.egg-info/dependency_links.txt
 rp2040_macropad.egg-info/entry_points.txt
+rp2040_macropad.egg-info/requires.txt
 rp2040_macropad.egg-info/top_level.txt
