@@ -2,7 +2,7 @@
 ====================================================================
  15-Key + 1 Rotary Encoder + Analog Axis Gamepad Controller
  Board: Waveshare RP2040-Zero
- Firmware: CircuitPython (keypad + rotaryio + analogio + NVM calibration)
+ Firmware: CircuitPython (keypad + rotaryio + analogio + adafruit_tinyusb.hid)
  Device Name: "15-Key RP2040 Gamepad Controller"
 ====================================================================
 """
@@ -18,19 +18,27 @@ import supervisor
 import sys
 import struct
 
-# Robust import for adafruit_hid
+# TinyUSB & HID imports
 try:
+    import usb_hid
+    import adafruit_tinyusb.hid as tinyusb_hid
+    from adafruit_hid.gamepad import Gamepad
+    from adafruit_hid.keyboard import Keyboard
+    from adafruit_hid.keycode import Keycode
+    from adafruit_hid.consumer_control import ConsumerControl
+    from adafruit_hid.consumer_control_code import ConsumerControlCode
+    HAS_TINYUSB = True
+except ImportError:
+    # Fallback to standard usb_hid / adafruit_hid if adafruit_tinyusb module is not on device
     import usb_hid
     from adafruit_hid.gamepad import Gamepad
     from adafruit_hid.keyboard import Keyboard
     from adafruit_hid.keycode import Keycode
     from adafruit_hid.consumer_control import ConsumerControl
     from adafruit_hid.consumer_control_code import ConsumerControlCode
-except ImportError:
-    print("BLAD: Brak biblioteki adafruit_hid w folderu lib!")
-    usb_hid = None
+    HAS_TINYUSB = False
 
-# Initialize HID Devices
+# Initialize HID Devices via TinyUSB / usb_hid
 keyboard = Keyboard(usb_hid.devices) if usb_hid else None
 consumer = ConsumerControl(usb_hid.devices) if usb_hid else None
 
@@ -189,7 +197,7 @@ joystick_x = 0  # Steering Range -127 to 127
 last_z_val = None
 serial_buffer = ""
 
-print("RP2040 Gamepad Controller Ready. Protocol: 1.1 (Signed Z)")
+print("RP2040 Gamepad Controller (Adafruit TinyUSB) Ready. Protocol: 1.1 (Signed Z)")
 
 # ====================================================================
 # MAIN LOOP
@@ -207,15 +215,13 @@ while True:
     # Process handbrake Z signed value (-32768 to 32767)
     z_val = process_handbrake(current_raw, config)
 
-    # Update Gamepad Z-Axis / Joystick if value changed or if direct HID report device is present
+    # Update Gamepad Z-Axis / Joystick
     if gamepad and (z_val != last_z_val):
         last_z_val = z_val
-        # Map signed -32768..32767 z_val to gamepad joystick z-axis range (-127..127)
         z_hid = map_value(z_val, -32768, 32767, -127, 127)
         try:
             gamepad.move_joysticks(x=joystick_x, z=z_hid)
         except TypeError:
-            # Fallback if adafruit_hid Gamepad move_joysticks only accepts x and y
             try:
                 gamepad.move_joysticks(x=joystick_x, r_z=z_hid)
             except Exception:

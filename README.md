@@ -1,6 +1,6 @@
-# 15-Key + 1 Rotary Encoder + Analog Axis Gamepad (RP2040-Zero)
+# 15-Key + 1 Rotary Encoder + Analog Axis Gamepad (RP2040-Zero & Adafruit TinyUSB)
 
-This repository contains the complete firmware code, USB configuration, persistent NVM calibration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder + 1 Analog Axis (Handbrake / Potentiometer) USB Gamepad Controller** driven by Waveshare RP2040-Zero and CircuitPython.
+This repository contains the complete firmware code, USB configuration, persistent NVM calibration, and hardware guide for building a custom **15-Key + 1 Rotary Encoder + 1 Analog Axis (Handbrake / Potentiometer) USB Gamepad Controller** driven by Waveshare RP2040-Zero and CircuitPython (`adafruit_tinyusb` + `adafruit_hid`).
 
 ---
 
@@ -50,7 +50,7 @@ pipkin install -r requirements-pipkin.txt
 - **Matrix**: 4x4 Grid (15 mechanical switches + 1 rotary encoder in top-left position `Row 0, Col 0`)
 - **Analog Axis**: Potentiometer / Handbrake input on **GP26 (ADC0)** with non-volatile memory (NVM) persistent calibration and deadzone processing
 - **Rotary Encoder**: Incremental EC11 rotary encoder (Pins A/B for rotation mapped to Joystick X-Axis Steering, push button mapped to Gamepad Button 16)
-- **USB HID Protocols**: Native Gamepad (`usb_hid.Device.GAMEPAD`), Keyboard, Consumer Control, Mouse
+- **USB Stack**: Adafruit TinyUSB / HID (`adafruit_tinyusb.hid` & `adafruit_hid`)
 - **Serial Calibration Protocol**: Non-blocking serial protocol over USB CDC for real-time calibration (`PING`, `READ`, `GET_CONFIG`, `SET`, `SAVE`)
 - **Features**:
   - Recognized natively in Windows/Linux/macOS as **"15-Key RP2040 Gamepad Controller"**
@@ -154,4 +154,4 @@ The macropad provides a non-blocking serial communication interface via USB Seri
 
 1. Hold `BOOT` button on RP2040-Zero, connect USB, and flash CircuitPython `.uf2`.
 2. Run `macropad-deploy` or copy `code.py` and `boot.py` to the `CIRCUITPY` drive.
-3. Place `adafruit_hid` in `CIRCUITPY/lib/`.
+3. Place `adafruit_hid` and `adafruit_tinyusb` in `CIRCUITPY/lib/`.
