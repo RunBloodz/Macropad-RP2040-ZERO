@@ -10,16 +10,14 @@
    - GP9 : Phase B
    - GP10: Click Push Button
 
- Arduino IDE Requirements:
-   - Install Earle Philhower RP2040 Board Core
-   - Select Tools -> USB Stack -> Adafruit TinyUSB
+ Required Arduino IDE Setup:
+   - Board: Waveshare RP2040 Zero or Raspberry Pi Pico (Earle Philhower Core)
+   - Tools -> USB Stack -> Adafruit TinyUSB
 ====================================================================
 */
 
 #include <Arduino.h>
 #include "EEPROM.h"
-
-// Standard TinyUSB HID for RP2040 Earle Philhower Core
 #include <Adafruit_TinyUSB.h>
 
 // HID Keycodes definitions
@@ -61,7 +59,7 @@ const uint8_t ENCODER_PIN_B = 9;    // GP9
 const uint8_t ENCODER_PIN_BTN = 10; // GP10
 
 // ====================================================================
-// USB HID SUBSYSTEM SETUP
+// USB HID INITIALIZATION AND SENDING
 // ====================================================================
 
 uint8_t const desc_hid_report[] = {
@@ -76,7 +74,9 @@ void initHID() {
   usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));
   usb_hid.begin();
 
-  while (!TinyUSBDevice.mounted()) {
+  // Non-blocking wait for USB enumeration (max 1 second)
+  uint32_t start = millis();
+  while (!TinyUSBDevice.mounted() && (millis() - start < 1000)) {
     delay(10);
   }
 }

@@ -20,23 +20,45 @@ A lightweight, high-performance 15-key mechanical switch + 1 rotary encoder USB 
 
 ---
 
-## How to Resolve `HID.h: No such file or directory` in Arduino IDE
+## Instrukcja Lutowania / Soldering Tutorial
 
-If you encountered `fatal error: HID.h: No such file or directory` when compiling in Arduino IDE:
+### 1. Diodes Orientation (COL2ROW) / Orientacja Diod
+* Every mechanical switch needs a 1N4148 diode in series to prevent ghosting.
+* **Orientation**: Solder diode with the **black line / cathode side** pointing towards the **Row pin (GP0–GP3)**.
+* The anode side connects to one leg of the mechanical switch. The other leg of the switch connects to the **Column pin (GP4–GP7)**.
 
-### Cause
-The standard AVR `Keyboard` library was installed globally in your Arduino libraries folder. The AVR `Keyboard` library requires `HID.h` (an AVR-specific core header) and is not compatible with RP2040.
-
-### Solution
-1. Open Arduino IDE -> **Tools** -> **Board** -> Select **Raspberry Pi Pico** or **Waveshare RP2040 Zero** (under Earle Philhower RP2040 Core).
-2. Go to **Tools** -> **USB Stack** -> select **Adafruit TinyUSB**.
-3. Compile and Upload. The provided code automatically uses `Adafruit_TinyUSB.h` built into the RP2040 core.
+### 2. Matrix Wiring Steps / Krok po Kroku
+1. **Columns Wiring**: Connect one side of all switches in Column 0 to `GP4`, Column 1 to `GP5`, Column 2 to `GP6`, Column 3 to `GP7`.
+2. **Rows Wiring**: Connect the cathode (black band side) of the diodes in Row 0 to `GP0`, Row 1 to `GP1`, Row 2 to `GP2`, Row 3 to `GP3`.
+3. **Rotary Encoder Wiring**:
+   - Solder Encoder Pin A to **GP8**.
+   - Solder Encoder Pin B to **GP9**.
+   - Solder Encoder Common / Ground pin to **GND**.
+   - Solder Encoder Switch Pin to **GP10** (other side to **GND**).
 
 ---
 
-## Repository Files
+## Rozwiązanie Błędu Kompilacji w Arduino IDE / Resolving Compilation Errors
 
-* `macropad.ino` - Main Arduino IDE C++ program handling matrix scanning, key reports, and rotary encoder media keys.
-* `EEPROM.h` & `EEPROM.cpp` - Lightweight RP2040 flash memory EEPROM emulation library.
-* `HID.h` - Stub header providing macro definitions for RP2040 compatibility.
-* `README.md` - Board setup and compilation guide.
+### Przyczyna błędu `Adafruit_USBH_CDC.h: error: expected class-name before '{' token`
+Ten błąd występuje, gdy w Arduino IDE wybrana jest płytka **Arduino Mbed OS RP2040**, a jednocześnie zainstalowana jest globalna biblioteka **Adafruit TinyUSB Library**. Biblioteka `Adafruit_TinyUSB_Library` jest przeznaczona dla rdzenia **Earle Philhower RP2040 Core**.
+
+### Jak to naprawić / How to fix:
+1. W Arduino IDE wybierz **Plik** -> **Preferencje** (**File** -> **Preferences**).
+2. Dodaj poniższy URL do **Dodatkowe adresy URL do menedżera płytek**:
+   ```
+   https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+   ```
+3. Otwórz **Narzędzia** -> **Płytka** -> **Menedżer płytek**, wyszukaj `rp2040` (autor: Earle F. Philhower) i zainstaluj go.
+4. Wybierz płytkę: **Raspberry Pi Pico** lub **Waveshare RP2040 Zero** pod sekcją `Raspberry Pi RP2040 Boards`.
+5. Przejdź do **Narzędzia** -> **USB Stack** -> wybierz **Adafruit TinyUSB**.
+6. Kliknij **Wgraj** (Upload).
+
+---
+
+## Pliki w repozytorium / Repository Files
+
+* `macropad.ino` - Główny program C++ w Arduino IDE do obsługi macierzy i enkodera.
+* `EEPROM.h` & `EEPROM.cpp` - Lekka biblioteka emulacji EEPROM w pamięci Flash RP2040.
+* `HID.h` - Nagłówek pomocniczy zapewniający definicje klawiszy.
+* `README.md` - Instrukcja lutowania, konfiguracji i podłączenia.
