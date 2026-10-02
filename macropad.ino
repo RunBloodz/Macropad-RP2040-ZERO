@@ -12,12 +12,21 @@
 
  Board Core Compatibility:
    - Earle Philhower RP2040 Core (Tools -> USB Stack -> Adafruit TinyUSB)
-   - Arduino Mbed OS RP2040 Core (Standard Keyboard library)
+   - Arduino Mbed OS RP2040 Core (Keyboard.h)
 ====================================================================
 */
 
 #include <Arduino.h>
 #include "EEPROM.h"
+
+// Check if Adafruit TinyUSB is available
+#if __has_include(<Adafruit_TinyUSB.h>)
+  #include <Adafruit_TinyUSB.h>
+  #define USE_TINYUSB 1
+#elif __has_include(<Keyboard.h>)
+  #include <Keyboard.h>
+  #define USE_KEYBOARD_LIB 1
+#endif
 
 // HID Keycodes definitions
 #ifndef HID_KEY_NUM_LOCK
@@ -58,48 +67,10 @@ const uint8_t ENCODER_PIN_B = 9;    // GP9
 const uint8_t ENCODER_PIN_BTN = 10; // GP10
 
 // ====================================================================
-// DUAL-CORE HID IMPLEMENTATION (Mbed OS vs Earle Philhower / TinyUSB)
+// USB HID SUBSYSTEM SETUP
 // ====================================================================
 
-#if defined(ARDUINO_ARCH_MBED) || defined(ARDUINO_ARCH_MBED_RP2040)
-
-#include <Keyboard.h>
-
-void initHID() {
-  Keyboard.begin();
-}
-
-void sendKeyboardReport(uint8_t* keys, uint8_t count) {
-  // Release keys no longer pressed
-  Keyboard.releaseAll();
-  for (uint8_t i = 0; i < count && i < 6; i++) {
-    if (keys[i] != 0) {
-      Keyboard.press(keys[i]);
-    }
-  }
-}
-
-void sendConsumerReport(uint16_t code) {
-  // Consumer media keys mapping
-  if (code == HID_USAGE_CONSUMER_VOLUME_INCREMENT) {
-    Keyboard.press(KEY_MEDIA_VOLUME_INC);
-    delay(10);
-    Keyboard.release(KEY_MEDIA_VOLUME_INC);
-  } else if (code == HID_USAGE_CONSUMER_VOLUME_DECREMENT) {
-    Keyboard.press(KEY_MEDIA_VOLUME_DEC);
-    delay(10);
-    Keyboard.release(KEY_MEDIA_VOLUME_DEC);
-  } else if (code == HID_USAGE_CONSUMER_MUTE) {
-    Keyboard.press(KEY_MEDIA_MUTE);
-    delay(10);
-    Keyboard.release(KEY_MEDIA_MUTE);
-  }
-}
-
-#else
-
-// Earle Philhower RP2040 Core using Adafruit TinyUSB
-#include <Adafruit_TinyUSB.h>
+#if defined(USE_TINYUSB)
 
 uint8_t const desc_hid_report[] = {
   TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(1)),
@@ -134,6 +105,43 @@ void sendConsumerReport(uint16_t code) {
   delay(10);
   usb_hid.sendReport16(2, 0);
 }
+
+#elif defined(USE_KEYBOARD_LIB)
+
+void initHID() {
+  Keyboard.begin();
+}
+
+void sendKeyboardReport(uint8_t* keys, uint8_t count) {
+  Keyboard.releaseAll();
+  for (uint8_t i = 0; i < count && i < 6; i++) {
+    if (keys[i] != 0) {
+      Keyboard.press(keys[i]);
+    }
+  }
+}
+
+void sendConsumerReport(uint16_t code) {
+  if (code == HID_USAGE_CONSUMER_VOLUME_INCREMENT) {
+    Keyboard.press(KEY_MEDIA_VOLUME_INC);
+    delay(10);
+    Keyboard.release(KEY_MEDIA_VOLUME_INC);
+  } else if (code == HID_USAGE_CONSUMER_VOLUME_DECREMENT) {
+    Keyboard.press(KEY_MEDIA_VOLUME_DEC);
+    delay(10);
+    Keyboard.release(KEY_MEDIA_VOLUME_DEC);
+  } else if (code == HID_USAGE_CONSUMER_MUTE) {
+    Keyboard.press(KEY_MEDIA_MUTE);
+    delay(10);
+    Keyboard.release(KEY_MEDIA_MUTE);
+  }
+}
+
+#else
+
+void initHID() {}
+void sendKeyboardReport(uint8_t* keys, uint8_t count) {}
+void sendConsumerReport(uint16_t code) {}
 
 #endif
 
