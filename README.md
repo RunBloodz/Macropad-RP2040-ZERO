@@ -20,25 +20,17 @@ A lightweight, high-performance 15-key mechanical switch + 1 rotary encoder USB 
 
 ---
 
-## Arduino IDE Board Core Options
+## How to Resolve `HID.h: No such file or directory` in Arduino IDE
 
-`macropad.ino` supports both popular RP2040 cores in Arduino IDE:
+If you encountered `fatal error: HID.h: No such file or directory` when compiling in Arduino IDE:
 
-### Option A: Earle Philhower RP2040 Core (Recommended)
-1. Open Arduino IDE -> **File** -> **Preferences**.
-2. Add this URL to **Additional Boards Manager URLs**:
-   ```
-   https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
-   ```
-3. Open **Tools** -> **Board** -> **Boards Manager**, search for `rp2040` by Earle F. Philhower, and install it.
-4. Select board: **Raspberry Pi Pico** or **Waveshare RP2040 Zero**.
-5. Go to **Tools** -> **USB Stack** -> select **Adafruit TinyUSB**.
-6. Click **Upload**.
+### Cause
+The standard AVR `Keyboard` library was installed globally in your Arduino libraries folder. The AVR `Keyboard` library requires `HID.h` (an AVR-specific core header) and is not compatible with RP2040.
 
-### Option B: Arduino Mbed OS RP2040 Core
-1. Open **Tools** -> **Board** -> **Arduino Mbed OS RP2040 Boards** -> select **Raspberry Pi Pico**.
-2. Go to **Tools** -> **Manage Libraries...**, search for `Keyboard`, and install the standard Arduino `Keyboard` library.
-3. Click **Upload**.
+### Solution
+1. Open Arduino IDE -> **Tools** -> **Board** -> Select **Raspberry Pi Pico** or **Waveshare RP2040 Zero** (under Earle Philhower RP2040 Core).
+2. Go to **Tools** -> **USB Stack** -> select **Adafruit TinyUSB**.
+3. Compile and Upload. The provided code automatically uses `Adafruit_TinyUSB.h` built into the RP2040 core.
 
 ---
 
@@ -46,4 +38,5 @@ A lightweight, high-performance 15-key mechanical switch + 1 rotary encoder USB 
 
 * `macropad.ino` - Main Arduino IDE C++ program handling matrix scanning, key reports, and rotary encoder media keys.
 * `EEPROM.h` & `EEPROM.cpp` - Lightweight RP2040 flash memory EEPROM emulation library.
+* `HID.h` - Stub header providing macro definitions for RP2040 compatibility.
 * `README.md` - Board setup and compilation guide.

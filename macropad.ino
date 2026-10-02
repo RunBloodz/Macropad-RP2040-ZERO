@@ -10,22 +10,19 @@
    - GP9 : Phase B
    - GP10: Click Push Button
 
- Board Core Compatibility:
-   - Earle Philhower RP2040 Core (Tools -> USB Stack -> Adafruit TinyUSB)
-   - Arduino Mbed OS RP2040 Core (Keyboard.h)
+ Arduino IDE Setup:
+   - Board: Raspberry Pi Pico or Waveshare RP2040 Zero (Earle Philhower Core)
+   - Tools -> USB Stack -> Adafruit TinyUSB
 ====================================================================
 */
 
 #include <Arduino.h>
 #include "EEPROM.h"
 
-// Check if Adafruit TinyUSB is available
+// Standard TinyUSB HID for RP2040 Core
 #if __has_include(<Adafruit_TinyUSB.h>)
   #include <Adafruit_TinyUSB.h>
-  #define USE_TINYUSB 1
-#elif __has_include(<Keyboard.h>)
-  #include <Keyboard.h>
-  #define USE_KEYBOARD_LIB 1
+  #define HAS_TINYUSB 1
 #endif
 
 // HID Keycodes definitions
@@ -70,7 +67,7 @@ const uint8_t ENCODER_PIN_BTN = 10; // GP10
 // USB HID SUBSYSTEM SETUP
 // ====================================================================
 
-#if defined(USE_TINYUSB)
+#if defined(HAS_TINYUSB)
 
 uint8_t const desc_hid_report[] = {
   TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(1)),
@@ -104,37 +101,6 @@ void sendConsumerReport(uint16_t code) {
   usb_hid.sendReport16(2, code);
   delay(10);
   usb_hid.sendReport16(2, 0);
-}
-
-#elif defined(USE_KEYBOARD_LIB)
-
-void initHID() {
-  Keyboard.begin();
-}
-
-void sendKeyboardReport(uint8_t* keys, uint8_t count) {
-  Keyboard.releaseAll();
-  for (uint8_t i = 0; i < count && i < 6; i++) {
-    if (keys[i] != 0) {
-      Keyboard.press(keys[i]);
-    }
-  }
-}
-
-void sendConsumerReport(uint16_t code) {
-  if (code == HID_USAGE_CONSUMER_VOLUME_INCREMENT) {
-    Keyboard.press(KEY_MEDIA_VOLUME_INC);
-    delay(10);
-    Keyboard.release(KEY_MEDIA_VOLUME_INC);
-  } else if (code == HID_USAGE_CONSUMER_VOLUME_DECREMENT) {
-    Keyboard.press(KEY_MEDIA_VOLUME_DEC);
-    delay(10);
-    Keyboard.release(KEY_MEDIA_VOLUME_DEC);
-  } else if (code == HID_USAGE_CONSUMER_MUTE) {
-    Keyboard.press(KEY_MEDIA_MUTE);
-    delay(10);
-    Keyboard.release(KEY_MEDIA_MUTE);
-  }
 }
 
 #else
