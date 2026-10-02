@@ -1,21 +1,49 @@
 /*
 ====================================================================
  15-Key + 1 Rotary Encoder 4x4 Macropad
- Board: Waveshare RP2040-Zero / RP2040
- Environment: Arduino IDE (Adafruit TinyUSB / Earle Philhower Core)
- Features: ONLY 15 Matrix Keys + Rotary Encoder (A/B + Push Button)
+ Board: Waveshare RP2040-Zero / RP2040 MCU
+ Hardware: 15 Mechanical Keys + 1 EC11 Rotary Encoder (A, B, Push Button)
+ Diodes: COL2ROW orientation
+
+ Board Core Compatibility:
+   - Earle Philhower RP2040 Core (Tools -> USB Stack -> Adafruit TinyUSB)
+   - Arduino Mbed OS RP2040 Core (PluggableUSBHID)
 ====================================================================
 */
 
 #include <Arduino.h>
 #include "EEPROM.h"
-#include <Adafruit_TinyUSB.h>
+
+// HID Keycodes definitions
+#ifndef HID_KEY_NUM_LOCK
+#define HID_KEY_NUM_LOCK          0x53
+#define HID_KEY_KEYPAD_DIVIDE     0x54
+#define HID_KEY_KEYPAD_MULTIPLY   0x55
+#define HID_KEY_KEYPAD_SUBTRACT   0x56
+#define HID_KEY_KEYPAD_ADD        0x57
+#define HID_KEY_KEYPAD_ENTER      0x58
+#define HID_KEY_KEYPAD_1          0x59
+#define HID_KEY_KEYPAD_2          0x5A
+#define HID_KEY_KEYPAD_3          0x5B
+#define HID_KEY_KEYPAD_4          0x5C
+#define HID_KEY_KEYPAD_5          0x5D
+#define HID_KEY_KEYPAD_6          0x5E
+#define HID_KEY_KEYPAD_7          0x5F
+#define HID_KEY_KEYPAD_8          0x60
+#define HID_KEY_KEYPAD_9          0x61
+#endif
+
+#ifndef HID_USAGE_CONSUMER_VOLUME_INCREMENT
+#define HID_USAGE_CONSUMER_VOLUME_INCREMENT 0x00E9
+#define HID_USAGE_CONSUMER_VOLUME_DECREMENT 0x00EA
+#define HID_USAGE_CONSUMER_MUTE             0x00E2
+#endif
 
 // ====================================================================
 // HARDWARE PIN DEFINITIONS
 // ====================================================================
 
-// 4x4 Matrix Pins (COL2ROW Diodes)
+// 4x4 Matrix Pins
 const uint8_t ROW_PINS[4] = {0, 1, 2, 3};  // GP0, GP1, GP2, GP3
 const uint8_t COL_PINS[4] = {4, 5, 6, 7};  // GP4, GP5, GP6, GP7
 
@@ -25,10 +53,104 @@ const uint8_t ENCODER_PIN_B = 9;    // GP9
 const uint8_t ENCODER_PIN_BTN = 10; // GP10
 
 // ====================================================================
-// USB HID REPORT DESCRIPTOR & TINYUSB SETUP
+// DUAL-CORE HID IMPLEMENTATION (Mbed OS vs Earle Philhower / TinyUSB)
 // ====================================================================
 
-// Keyboard + Consumer Control (Media Keys) Combined Report Descriptor
+#if defined(ARDUINO_ARCH_MBED) || defined(ARDUINO_ARCH_MBED_RP2040)
+
+#include "PluggableUSBHID.h"
+
+// HID Report Descriptor for Mbed OS Core
+static const uint8_t desc_hid_report[] = {
+  // Keyboard (Report ID 1)
+  0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+  0x09, 0x06,        // Usage (Keyboard)
+  0xA1, 0x01,        // Collection (Application)
+  0x85, 0x01,        //   Report ID (1)
+  0x05, 0x07,        //   Usage Page (Kbrd/Keypad)
+  0x19, 0xE0,        //   Usage Minimum (0xE0)
+  0x29, 0xE7,        //   Usage Maximum (0xE7)
+  0x15, 0x00,        //   Logical Minimum (0)
+  0x25, 0x01,        //   Logical Maximum (1)
+  0x75, 0x01,        //   Report Size (1)
+  0x95, 0x08,        //   Report Count (8)
+  0x81, 0x02,        //   Input (Data,Var,Abs) ; Modifier byte
+  0x75, 0x08,        //   Report Size (8)
+  0x95, 0x01,        //   Report Count (1)
+  0x81, 0x01,        //   Input (Const,Array,Abs) ; Reserved byte
+  0x75, 0x08,        //   Report Size (8)
+  0x95, 0x06,        //   Report Count (6)
+  0x15, 0x00,        //   Logical Minimum (0)
+  0x25, 0x65,        //   Logical Maximum (101)
+  0x05, 0x07,        //   Usage Page (Kbrd/Keypad)
+  0x19, 0x00,        //   Usage Minimum (0)
+  0x29, 0x65,        //   Usage Maximum (101)
+  0x81, 0x00,        //   Input (Data,Array,Abs)
+  0xC0,              // End Collection
+
+  // Consumer Control (Report ID 2)
+  0x05, 0x0C,        // Usage Page (Consumer)
+  0x09, 0x01,        // Usage (Consumer Control)
+  0xA1, 0x01,        // Collection (Application)
+  0x85, 0x02,        //   Report ID (2)
+  0x15, 0x00,        //   Logical Minimum (0)
+  0x25, 0x01,        //   Logical Maximum (1)
+  0x75, 0x01,        //   Report Size (1)
+  0x95, 0x10,        //   Report Count (16)
+  0x19, 0x00,        //   Usage Minimum (0)
+  0x2A, 0x3C, 0x02,  //   Usage Maximum (0x023C)
+  0x81, 0x00,        //   Input (Data,Array,Abs)
+  0xC0               // End Collection
+};
+
+class MbedMacropadHID : public pluggable_usb_hid::PluggableUSBHID {
+public:
+  MbedMacropadHID() : pluggable_usb_hid::PluggableUSBHID(desc_hid_report, sizeof(desc_hid_report)) {}
+
+  void sendKeyboard(uint8_t* keys, uint8_t count) {
+    uint8_t report[9];
+    report[0] = 1; // Report ID 1
+    report[1] = 0; // Modifiers
+    report[2] = 0; // Reserved
+    memset(&report[3], 0, 6);
+    for (uint8_t i = 0; i < count && i < 6; i++) {
+      report[3 + i] = keys[i];
+    }
+    send(report, sizeof(report));
+  }
+
+  void sendConsumer(uint16_t code) {
+    uint8_t report[3];
+    report[0] = 2; // Report ID 2
+    report[1] = code & 0xFF;
+    report[2] = (code >> 8) & 0xFF;
+    send(report, sizeof(report));
+    delay(10);
+    report[1] = 0;
+    report[2] = 0;
+    send(report, sizeof(report));
+  }
+};
+
+static MbedMacropadHID macropad_hid;
+
+void initHID() {
+  // Mbed OS initializes USB automatically
+}
+
+void sendKeyboardReport(uint8_t* keys, uint8_t count) {
+  macropad_hid.sendKeyboard(keys, count);
+}
+
+void sendConsumerReport(uint16_t code) {
+  macropad_hid.sendConsumer(code);
+}
+
+#else
+
+// Earle Philhower RP2040 Core using Adafruit TinyUSB
+#include <Adafruit_TinyUSB.h>
+
 uint8_t const desc_hid_report[] = {
   TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(1)),
   TUD_HID_REPORT_DESC_CONSUMER(HID_REPORT_ID(2))
@@ -36,12 +158,39 @@ uint8_t const desc_hid_report[] = {
 
 Adafruit_USBD_HID usb_hid;
 
+void initHID() {
+  usb_hid.setPollInterval(2);
+  usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));
+  usb_hid.begin();
+
+  while (!TinyUSBDevice.mounted()) {
+    delay(10);
+  }
+}
+
+void sendKeyboardReport(uint8_t* keys, uint8_t count) {
+  if (!usb_hid.ready()) return;
+  hid_keyboard_report_t kb_report;
+  memset(&kb_report, 0, sizeof(kb_report));
+  for (uint8_t i = 0; i < count && i < 6; i++) {
+    kb_report.keycode[i] = keys[i];
+  }
+  usb_hid.sendReport(1, &kb_report, sizeof(kb_report));
+}
+
+void sendConsumerReport(uint16_t code) {
+  if (!usb_hid.ready()) return;
+  usb_hid.sendReport16(2, code);
+  delay(10);
+  usb_hid.sendReport16(2, 0);
+}
+
+#endif
+
 // ====================================================================
 // DEFAULT KEYMAP MATRIX (15 Keys + Encoder Slot at Row 0, Col 0)
 // ====================================================================
 
-// Map Matrix (4x4) to USB HID keycodes:
-// Row 0, Col 0 is physical Encoder position, remaining 15 slots are keys
 const uint8_t KEYMAP[4][4] = {
   { 0,            HID_KEY_NUM_LOCK,    HID_KEY_KEYPAD_DIVIDE,   HID_KEY_KEYPAD_MULTIPLY },
   { HID_KEY_KEYPAD_7, HID_KEY_KEYPAD_8, HID_KEY_KEYPAD_9,    HID_KEY_KEYPAD_SUBTRACT },
@@ -49,15 +198,10 @@ const uint8_t KEYMAP[4][4] = {
   { HID_KEY_KEYPAD_1, HID_KEY_KEYPAD_2, HID_KEY_KEYPAD_3,    HID_KEY_KEYPAD_ENTER }
 };
 
-// State variables
-bool current_key_state[4][4] = {false};
-bool previous_key_state[4][4] = {false};
-
 int last_encoder_a = HIGH;
 bool last_encoder_btn = HIGH;
 
 void setup() {
-  // EEPROM Initialization
   EEPROM.begin(256);
 
   // Initialize Matrix Row Pins (Inputs with Pull-Down for COL2ROW)
@@ -76,20 +220,11 @@ void setup() {
   pinMode(ENCODER_PIN_B, INPUT_PULLUP);
   pinMode(ENCODER_PIN_BTN, INPUT_PULLUP);
 
-  // Configure TinyUSB HID
-  usb_hid.setPollInterval(2);
-  usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));
-  usb_hid.begin();
-
-  // Wait for USB Device Mount
-  while (!TinyUSBDevice.mounted()) {
-    delay(10);
-  }
+  // Initialize USB HID Subsystem
+  initHID();
 }
 
 void loop() {
-  if (!usb_hid.ready()) return;
-
   // ------------------------------------------------------------------
   // 1. Scan 4x4 Key Matrix (15 Mechanical Switches)
   // ------------------------------------------------------------------
@@ -101,14 +236,11 @@ void loop() {
       // Row 0, Col 0 is reserved for physical rotary encoder
       if (r == 0 && c == 0) continue;
 
-      // Drive Column HIGH
       digitalWrite(COL_PINS[c], HIGH);
       delayMicroseconds(5);
 
       bool pressed = (digitalRead(ROW_PINS[r]) == HIGH);
       digitalWrite(COL_PINS[c], LOW);
-
-      current_key_state[r][c] = pressed;
 
       if (pressed && report_count < 6) {
         key_report[report_count++] = KEYMAP[r][c];
@@ -116,35 +248,19 @@ void loop() {
     }
   }
 
-  // Construct standard 8-byte HID keyboard report
-  // Byte 0: Modifier keys (0)
-  // Byte 1: Reserved (0)
-  // Bytes 2-7: Up to 6 keycodes
-  hid_keyboard_report_t kb_report;
-  memset(&kb_report, 0, sizeof(kb_report));
-  for (uint8_t i = 0; i < report_count && i < 6; i++) {
-    kb_report.keycode[i] = key_report[i];
-  }
-
-  // Send HID Keyboard Report (ID 1)
-  usb_hid.sendReport(1, &kb_report, sizeof(kb_report));
+  // Send HID Keyboard Report
+  sendKeyboardReport(key_report, report_count);
 
   // ------------------------------------------------------------------
   // 2. Scan Rotary Encoder Rotation (Volume Control)
   // ------------------------------------------------------------------
   int current_a = digitalRead(ENCODER_PIN_A);
   if (current_a != last_encoder_a && current_a == LOW) {
-    uint16_t consumer_key = 0;
     if (digitalRead(ENCODER_PIN_B) == HIGH) {
-      // Rotate Right -> Volume Up
-      consumer_key = HID_USAGE_CONSUMER_VOLUME_INCREMENT;
+      sendConsumerReport(HID_USAGE_CONSUMER_VOLUME_INCREMENT);
     } else {
-      // Rotate Left -> Volume Down
-      consumer_key = HID_USAGE_CONSUMER_VOLUME_DECREMENT;
+      sendConsumerReport(HID_USAGE_CONSUMER_VOLUME_DECREMENT);
     }
-    usb_hid.sendReport16(2, consumer_key);
-    delay(10);
-    usb_hid.sendReport16(2, 0);
   }
   last_encoder_a = current_a;
 
@@ -153,10 +269,7 @@ void loop() {
   // ------------------------------------------------------------------
   bool current_btn = (digitalRead(ENCODER_PIN_BTN) == LOW);
   if (current_btn && !last_encoder_btn) {
-    // Button Pressed -> Mute
-    usb_hid.sendReport16(2, HID_USAGE_CONSUMER_MUTE);
-    delay(10);
-    usb_hid.sendReport16(2, 0);
+    sendConsumerReport(HID_USAGE_CONSUMER_MUTE);
   }
   last_encoder_btn = current_btn;
 
