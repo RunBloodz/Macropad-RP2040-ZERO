@@ -1,5 +1,0 @@
-# Pipkin requirements file for CircuitPython / RP2040-Zero Macropad Gamepad
-# Usage: pipkin install -r requirements-pipkin.txt
-
-adafruit-circuitpython-hid
-adafruit-circuitpython-tinyusb-hid
