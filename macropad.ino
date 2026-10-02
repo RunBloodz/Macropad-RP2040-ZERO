@@ -12,7 +12,7 @@
 
  Board Core Compatibility:
    - Earle Philhower RP2040 Core (Tools -> USB Stack -> Adafruit TinyUSB)
-   - Arduino Mbed OS RP2040 Core (PluggableUSBHID)
+   - Arduino Mbed OS RP2040 Core (Standard Keyboard library)
 ====================================================================
 */
 
@@ -63,97 +63,37 @@ const uint8_t ENCODER_PIN_BTN = 10; // GP10
 
 #if defined(ARDUINO_ARCH_MBED) || defined(ARDUINO_ARCH_MBED_RP2040)
 
-#include "PluggableUSBHID.h"
-
-// HID Report Descriptor for Mbed OS Core
-static const uint8_t desc_hid_report[] = {
-  // Keyboard (Report ID 1)
-  0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
-  0x09, 0x06,        // Usage (Keyboard)
-  0xA1, 0x01,        // Collection (Application)
-  0x85, 0x01,        //   Report ID (1)
-  0x05, 0x07,        //   Usage Page (Kbrd/Keypad)
-  0x19, 0xE0,        //   Usage Minimum (0xE0)
-  0x29, 0xE7,        //   Usage Maximum (0xE7)
-  0x15, 0x00,        //   Logical Minimum (0)
-  0x25, 0x01,        //   Logical Maximum (1)
-  0x75, 0x01,        //   Report Size (1)
-  0x95, 0x08,        //   Report Count (8)
-  0x81, 0x02,        //   Input (Data,Var,Abs) ; Modifier byte
-  0x75, 0x08,        //   Report Size (8)
-  0x95, 0x01,        //   Report Count (1)
-  0x81, 0x01,        //   Input (Const,Array,Abs) ; Reserved byte
-  0x75, 0x08,        //   Report Size (8)
-  0x95, 0x06,        //   Report Count (6)
-  0x15, 0x00,        //   Logical Minimum (0)
-  0x25, 0x65,        //   Logical Maximum (101)
-  0x05, 0x07,        //   Usage Page (Kbrd/Keypad)
-  0x19, 0x00,        //   Usage Minimum (0)
-  0x29, 0x65,        //   Usage Maximum (101)
-  0x81, 0x00,        //   Input (Data,Array,Abs)
-  0xC0,              // End Collection
-
-  // Consumer Control (Report ID 2)
-  0x05, 0x0C,        // Usage Page (Consumer)
-  0x09, 0x01,        // Usage (Consumer Control)
-  0xA1, 0x01,        // Collection (Application)
-  0x85, 0x02,        //   Report ID (2)
-  0x15, 0x00,        //   Logical Minimum (0)
-  0x25, 0x01,        //   Logical Maximum (1)
-  0x75, 0x01,        //   Report Size (1)
-  0x95, 0x10,        //   Report Count (16)
-  0x19, 0x00,        //   Usage Minimum (0)
-  0x2A, 0x3C, 0x02,  //   Usage Maximum (0x023C)
-  0x81, 0x00,        //   Input (Data,Array,Abs)
-  0xC0               // End Collection
-};
-
-class MbedMacropadHID : public arduino::PluggableUSBHID {
-public:
-  MbedMacropadHID() : arduino::PluggableUSBHID(desc_hid_report, sizeof(desc_hid_report)) {}
-
-  void sendKeyboard(uint8_t* keys, uint8_t count) {
-    uint8_t report[9];
-    report[0] = 1; // Report ID 1
-    report[1] = 0; // Modifiers
-    report[2] = 0; // Reserved
-    memset(&report[3], 0, 6);
-    for (uint8_t i = 0; i < count && i < 6; i++) {
-      report[3 + i] = keys[i];
-    }
-    send(report, sizeof(report));
-  }
-
-  void sendConsumer(uint16_t code) {
-    uint8_t report[3];
-    report[0] = 2; // Report ID 2
-    report[1] = code & 0xFF;
-    report[2] = (code >> 8) & 0xFF;
-    send(report, sizeof(report));
-    delay(10);
-    report[1] = 0;
-    report[2] = 0;
-    send(report, sizeof(report));
-  }
-
-protected:
-  int getDescriptor(uint8_t type, uint8_t index, uint8_t* data, uint16_t len) override {
-    return 0;
-  }
-};
-
-static MbedMacropadHID macropad_hid;
+#include <Keyboard.h>
 
 void initHID() {
-  // Mbed OS initializes USB automatically
+  Keyboard.begin();
 }
 
 void sendKeyboardReport(uint8_t* keys, uint8_t count) {
-  macropad_hid.sendKeyboard(keys, count);
+  // Release keys no longer pressed
+  Keyboard.releaseAll();
+  for (uint8_t i = 0; i < count && i < 6; i++) {
+    if (keys[i] != 0) {
+      Keyboard.press(keys[i]);
+    }
+  }
 }
 
 void sendConsumerReport(uint16_t code) {
-  macropad_hid.sendConsumer(code);
+  // Consumer media keys mapping
+  if (code == HID_USAGE_CONSUMER_VOLUME_INCREMENT) {
+    Keyboard.press(KEY_MEDIA_VOLUME_INC);
+    delay(10);
+    Keyboard.release(KEY_MEDIA_VOLUME_INC);
+  } else if (code == HID_USAGE_CONSUMER_VOLUME_DECREMENT) {
+    Keyboard.press(KEY_MEDIA_VOLUME_DEC);
+    delay(10);
+    Keyboard.release(KEY_MEDIA_VOLUME_DEC);
+  } else if (code == HID_USAGE_CONSUMER_MUTE) {
+    Keyboard.press(KEY_MEDIA_MUTE);
+    delay(10);
+    Keyboard.release(KEY_MEDIA_MUTE);
+  }
 }
 
 #else

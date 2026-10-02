@@ -16,22 +16,15 @@ A lightweight, high-performance 15-key mechanical switch + 1 rotary encoder USB 
 | **Matrix Cols (4)** | Col 0, 1, 2, 3 | `GP4`, `GP5`, `GP6`, `GP7` |
 | **Rotary Encoder Pin A** | Encoder Phase A | `GP8` |
 | **Rotary Encoder Pin B** | Encoder Phase B | `GP9` |
-| **Rotary Encoder Button** | Dedicated Switch Pin | `GP10` |
+| **Rotary Encoder Button** | Dedicated Switch Pin (Click) | `GP10` |
 
 ---
 
-## How to Resolve Compilation Error in Arduino IDE
+## Arduino IDE Board Core Options
 
-If you encountered the following error in Arduino IDE:
-```text
-C:\Users\...\Adafruit_TinyUSB_Library\src\arduino\cdc\Adafruit_USBH_CDC.h:30:49: error: expected class-name before '{' token
- class Adafruit_USBH_CDC : public HardwareSerial {
-```
+`macropad.ino` supports both popular RP2040 cores in Arduino IDE:
 
-### Explanation
-This error occurs because the **Arduino Mbed OS RP2040 Core** is being used together with the global **Adafruit TinyUSB Library**, which targets the **Earle Philhower RP2040 Core**.
-
-### Recommended Fix (Option A - Earle Philhower Core)
+### Option A: Earle Philhower RP2040 Core (Recommended)
 1. Open Arduino IDE -> **File** -> **Preferences**.
 2. Add this URL to **Additional Boards Manager URLs**:
    ```
@@ -42,8 +35,10 @@ This error occurs because the **Arduino Mbed OS RP2040 Core** is being used toge
 5. Go to **Tools** -> **USB Stack** -> select **Adafruit TinyUSB**.
 6. Click **Upload**.
 
-### Alternative Fix (Option B - Mbed OS RP2040 Core)
-The provided `macropad.ino` includes native dual-core macros (`ARDUINO_ARCH_MBED`). Simply select your RP2040 board under **Arduino Mbed OS RP2040 Boards** and compile directly without selecting TinyUSB in Tools.
+### Option B: Arduino Mbed OS RP2040 Core
+1. Open **Tools** -> **Board** -> **Arduino Mbed OS RP2040 Boards** -> select **Raspberry Pi Pico**.
+2. Go to **Tools** -> **Manage Libraries...**, search for `Keyboard`, and install the standard Arduino `Keyboard` library.
+3. Click **Upload**.
 
 ---
 
