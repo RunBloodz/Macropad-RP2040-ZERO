@@ -10,20 +10,17 @@
    - GP9 : Phase B
    - GP10: Click Push Button
 
- Arduino IDE Setup:
-   - Board: Raspberry Pi Pico or Waveshare RP2040 Zero (Earle Philhower Core)
-   - Tools -> USB Stack -> Adafruit TinyUSB
+ Arduino IDE Requirements:
+   - Install Earle Philhower RP2040 Board Core
+   - Select Tools -> USB Stack -> Adafruit TinyUSB
 ====================================================================
 */
 
 #include <Arduino.h>
 #include "EEPROM.h"
 
-// Standard TinyUSB HID for RP2040 Core
-#if __has_include(<Adafruit_TinyUSB.h>)
-  #include <Adafruit_TinyUSB.h>
-  #define HAS_TINYUSB 1
-#endif
+// Standard TinyUSB HID for RP2040 Earle Philhower Core
+#include <Adafruit_TinyUSB.h>
 
 // HID Keycodes definitions
 #ifndef HID_KEY_NUM_LOCK
@@ -67,8 +64,6 @@ const uint8_t ENCODER_PIN_BTN = 10; // GP10
 // USB HID SUBSYSTEM SETUP
 // ====================================================================
 
-#if defined(HAS_TINYUSB)
-
 uint8_t const desc_hid_report[] = {
   TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(1)),
   TUD_HID_REPORT_DESC_CONSUMER(HID_REPORT_ID(2))
@@ -102,14 +97,6 @@ void sendConsumerReport(uint16_t code) {
   delay(10);
   usb_hid.sendReport16(2, 0);
 }
-
-#else
-
-void initHID() {}
-void sendKeyboardReport(uint8_t* keys, uint8_t count) {}
-void sendConsumerReport(uint16_t code) {}
-
-#endif
 
 // ====================================================================
 // DEFAULT KEYMAP MATRIX (15 Keys + Encoder Slot at Row 0, Col 0)
