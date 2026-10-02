@@ -5,6 +5,11 @@
  Hardware: 15 Mechanical Keys + 1 EC11 Rotary Encoder (A, B, Push Button)
  Diodes: COL2ROW orientation
 
+ Rotary Encoder Pin Mapping:
+   - GP8 : Phase A
+   - GP9 : Phase B
+   - GP10: Click Push Button
+
  Board Core Compatibility:
    - Earle Philhower RP2040 Core (Tools -> USB Stack -> Adafruit TinyUSB)
    - Arduino Mbed OS RP2040 Core (PluggableUSBHID)
@@ -103,9 +108,9 @@ static const uint8_t desc_hid_report[] = {
   0xC0               // End Collection
 };
 
-class MbedMacropadHID : public pluggable_usb_hid::PluggableUSBHID {
+class MbedMacropadHID : public arduino::PluggableUSBHID {
 public:
-  MbedMacropadHID() : pluggable_usb_hid::PluggableUSBHID(desc_hid_report, sizeof(desc_hid_report)) {}
+  MbedMacropadHID() : arduino::PluggableUSBHID(desc_hid_report, sizeof(desc_hid_report)) {}
 
   void sendKeyboard(uint8_t* keys, uint8_t count) {
     uint8_t report[9];
@@ -129,6 +134,11 @@ public:
     report[1] = 0;
     report[2] = 0;
     send(report, sizeof(report));
+  }
+
+protected:
+  int getDescriptor(uint8_t type, uint8_t index, uint8_t* data, uint16_t len) override {
+    return 0;
   }
 };
 
