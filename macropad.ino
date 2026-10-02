@@ -10,11 +10,15 @@
    - GP9 : Phase B
    - GP10: Click Push Button
 
- Required Arduino IDE Setup:
-   - Board: Waveshare RP2040 Zero or Raspberry Pi Pico (Earle Philhower Core)
-   - Tools -> USB Stack -> Adafruit TinyUSB
+ ARDUINO IDE BOARD CONFIGURATION REQUIRED:
+   1. Tools -> Board -> Raspberry Pi RP2040 Boards -> Raspberry Pi Pico (or Waveshare RP2040 Zero)
+   2. Tools -> USB Stack -> Adafruit TinyUSB
 ====================================================================
 */
+
+#if defined(ARDUINO_ARCH_MBED) || defined(ARDUINO_ARCH_MBED_RP2040)
+  #error "BLAD WBO RU PLYTKI: Wybrano plytke 'Arduino Mbed OS RP2040'. Zmien plytke w Arduino IDE na 'Raspberry Pi Pico' lub 'Waveshare RP2040 Zero' z sekcji 'Raspberry Pi RP2040 Boards' (Earle Philhower Core) oraz włącz 'Narzędzia -> USB Stack -> Adafruit TinyUSB'!"
+#endif
 
 #include <Arduino.h>
 #include "EEPROM.h"

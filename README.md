@@ -20,39 +20,39 @@ A lightweight, high-performance 15-key mechanical switch + 1 rotary encoder USB 
 
 ---
 
-## Instrukcja Lutowania / Soldering Tutorial
+## WARUNIK KONFIGURACJI ARDUINO IDE / HOW TO FIX COMPILATION ERROR
 
-### 1. Diodes Orientation (COL2ROW) / Orientacja Diod
-* Every mechanical switch needs a 1N4148 diode in series to prevent ghosting.
-* **Orientation**: Solder diode with the **black line / cathode side** pointing towards the **Row pin (GP0–GP3)**.
-* The anode side connects to one leg of the mechanical switch. The other leg of the switch connects to the **Column pin (GP4–GP7)**.
+### Przyczyna błędu `Adafruit_USBH_CDC.h: error: expected class-name before '{' token`
+Ten błąd pojawia się, gdy w Arduino IDE wybrana jest płytka **Arduino Mbed OS RP2040** (`mbed_rp2040`), która nie wspiera bezpośrednio biblioteki Adafruit TinyUSB.
 
-### 2. Matrix Wiring Steps / Krok po Kroku
-1. **Columns Wiring**: Connect one side of all switches in Column 0 to `GP4`, Column 1 to `GP5`, Column 2 to `GP6`, Column 3 to `GP7`.
-2. **Rows Wiring**: Connect the cathode (black band side) of the diodes in Row 0 to `GP0`, Row 1 to `GP1`, Row 2 to `GP2`, Row 3 to `GP3`.
-3. **Rotary Encoder Wiring**:
-   - Solder Encoder Pin A to **GP8**.
-   - Solder Encoder Pin B to **GP9**.
-   - Solder Encoder Common / Ground pin to **GND**.
-   - Solder Encoder Switch Pin to **GP10** (other side to **GND**).
+### Instrukcja krok po kroku (Krok po kroku w Arduino IDE):
+
+1. Otwórz Arduino IDE -> **Plik** -> **Preferencje** (**File** -> **Preferences**).
+2. Wklej poniższy adres URL do pola **Dodatkowe adresy URL do menedżera płytek** (**Additional Boards Manager URLs**):
+   ```text
+   https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+   ```
+3. Przejdź do **Narzędzia** -> **Płytka** -> **Menedżer płytek** (**Tools** -> **Board** -> **Boards Manager**).
+4. Wyszukaj `rp2040` i zainstaluj paczkę **Raspberry Pi Pico/RP2040** autorstwa **Earle F. Philhower, III**.
+5. W menu **Narzędzia** -> **Płytka** (**Tools** -> **Board**) wybierz:
+   - **Raspberry Pi RP2040 Boards** -> **Waveshare RP2040 Zero** (lub **Raspberry Pi Pico**).
+6. W menu **Narzędzia** -> **USB Stack** (**Tools** -> **USB Stack**) wybierz **Adafruit TinyUSB**.
+7. Kliknij **Wgraj** (**Upload**).
 
 ---
 
-## Rozwiązanie Błędu Kompilacji w Arduino IDE / Resolving Compilation Errors
+## Instrukcja Lutowania / Soldering Tutorial
 
-### Przyczyna błędu `Adafruit_USBH_CDC.h: error: expected class-name before '{' token`
-Ten błąd występuje, gdy w Arduino IDE wybrana jest płytka **Arduino Mbed OS RP2040**, a jednocześnie zainstalowana jest globalna biblioteka **Adafruit TinyUSB Library**. Biblioteka `Adafruit_TinyUSB_Library` jest przeznaczona dla rdzenia **Earle Philhower RP2040 Core**.
+### 1. Diodes Orientation (COL2ROW) / Orientacja Diod
+* Każdy przełącznik mechaniczny wymaga diody 1N4148 zapobiegającej "ghostingowi".
+* **Orientacja**: Przylutuj diodę z **czarnym paskiem (katodą)** skierowanym w stronę **pinu wiersza (GP0–GP3)**.
+* Anoda diody łączy się z jedną nóżką przełącznika, a druga nóżka przełącznika łączy się z **pinem kolumny (GP4–GP7)**.
 
-### Jak to naprawić / How to fix:
-1. W Arduino IDE wybierz **Plik** -> **Preferencje** (**File** -> **Preferences**).
-2. Dodaj poniższy URL do **Dodatkowe adresy URL do menedżera płytek**:
-   ```
-   https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
-   ```
-3. Otwórz **Narzędzia** -> **Płytka** -> **Menedżer płytek**, wyszukaj `rp2040` (autor: Earle F. Philhower) i zainstaluj go.
-4. Wybierz płytkę: **Raspberry Pi Pico** lub **Waveshare RP2040 Zero** pod sekcją `Raspberry Pi RP2040 Boards`.
-5. Przejdź do **Narzędzia** -> **USB Stack** -> wybierz **Adafruit TinyUSB**.
-6. Kliknij **Wgraj** (Upload).
+### 2. Schemat Połączeń Enkodera / Encoder Wiring
+* Enkoder A -> **GP8**
+* Enkoder B -> **GP9**
+* Przycisk Enkodera -> **GP10**
+* Mass / Masa -> **GND**
 
 ---
 
