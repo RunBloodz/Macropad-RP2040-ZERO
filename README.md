@@ -20,7 +20,32 @@ A lightweight, high-performance 15-key mechanical switch + 1 rotary encoder USB 
 
 ---
 
-## WARUNIK KONFIGURACJI ARDUINO IDE / HOW TO FIX COMPILATION ERROR
+## Windows Key Editing via Serial CDC / Edycja Klawiszy w Windows
+
+You can edit key assignments dynamically in Windows using **Arduino Serial Monitor**, **PuTTY**, **Tera Term**, or any serial terminal over the device's COM port (115200 baud).
+
+### Serial Commands / Komendy Serial
+* `GET` - Displays current 4x4 matrix keymap in HEX format.
+* `SET <row> <col> <hex_keycode>` - Changes keycode at matrix position (Row 0..3, Col 0..3).
+  * *Example*: `SET 0 1 04` sets Row 0, Col 1 to Key 'A' (`0x04`).
+* `SAVE` - Saves current active keymap into EEPROM flash memory.
+* `RESET` - Restores default keypad keymap.
+* `HELP` - Displays command usage help.
+
+### Common USB HID Keycodes (HEX)
+| Key | HEX Code | Key | HEX Code |
+| :--- | :--- | :--- | :--- |
+| **A – Z** | `0x04` – `0x1D` | **Keypad 1 – 9** | `0x59` – `0x61` |
+| **1 – 0** | `0x1E` – `0x27` | **Num Lock** | `0x53` |
+| **ENTER** | `0x28` | **Keypad / (Divide)** | `0x54` |
+| **ESCAPE** | `0x29` | **Keypad * (Multiply)** | `0x55` |
+| **BACKSPACE**| `0x2A` | **Keypad - (Subtract)** | `0x56` |
+| **TAB** | `0x2B` | **Keypad + (Add)** | `0x57` |
+| **SPACE** | `0x2C` | **Keypad ENTER** | `0x58` |
+
+---
+
+## Warunki Konfiguracji Arduino IDE / How to Fix Compilation Error
 
 ### Przyczyna błędu `Adafruit_USBH_CDC.h: error: expected class-name before '{' token`
 Ten błąd pojawia się, gdy w Arduino IDE wybrana jest płytka **Arduino Mbed OS RP2040** (`mbed_rp2040`), która nie wspiera bezpośrednio biblioteki Adafruit TinyUSB.
@@ -58,7 +83,7 @@ Ten błąd pojawia się, gdy w Arduino IDE wybrana jest płytka **Arduino Mbed O
 
 ## Pliki w repozytorium / Repository Files
 
-* `macropad.ino` - Główny program C++ w Arduino IDE do obsługi macierzy i enkodera.
+* `macropad.ino` - Główny program C++ w Arduino IDE z obsługą USB CDC key-editing, macierzy i enkodera.
 * `EEPROM.h` & `EEPROM.cpp` - Lekka biblioteka emulacji EEPROM w pamięci Flash RP2040.
 * `HID.h` - Nagłówek pomocniczy zapewniający definicje klawiszy.
 * `README.md` - Instrukcja lutowania, konfiguracji i podłączenia.
